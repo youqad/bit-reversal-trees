@@ -107,7 +107,13 @@ def main():
             pbar.update(1)
 
     print(colored(f"Found {len(solutions)} solutions!", "green"))
-    pprint(solutions)
+    if solutions:
+        with open("solutions.txt", "a+") as f:
+            for solution in solutions:
+                f.write(solution + "\n\n")
+        print(colored("Solutions have been saved to 'solutions.txt' 🚀", "light_green"))
+    else:
+        print(colored("No solution found. ❌", "magenta"))
     ghci.sendline(':q')  # Quit GHCi
     ghci.expect(pexpect.EOF)
     ghci.terminate()
