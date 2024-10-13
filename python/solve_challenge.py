@@ -124,11 +124,11 @@ def process_conversation(conversation, ghci):
     idx = conversation["idx"]
 
     first_assistant_message = messages[-1]
-    feedback, success = verify_response(first_assistant_message.content, ghci)
+    feedback, success = verify_response(first_assistant_message["content"], ghci)
     if success:
         return feedback, success
     messages.append({"role": "user", "content": feedback})
-
+    
     pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
 
     while conversation["round_num"] <= MAX_ROUNDS:
