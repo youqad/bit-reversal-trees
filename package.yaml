@@ -1,0 +1,63 @@
+name:                bit-reversal-trees
+version:             0.1.0.0
+github:              "youqad/bit-reversal-trees"
+license:             MIT
+author:              "Younesse Kaddar"
+maintainer:          "younesse.kaddar@chch.ox.ac.uk"
+
+extra-source-files:
+- README.md
+- haskell_prompt.md
+- Victor_challenge.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/youqad/bit-reversal-trees#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- QuickCheck
+- containers
+- hspec
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  bit-reversal-trees-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bit-reversal-trees
+
+tests:
+  bit-reversal-trees-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bit-reversal-trees
+    - QuickCheck

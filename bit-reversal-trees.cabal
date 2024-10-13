@@ -1,0 +1,70 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           bit-reversal-trees
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/youqad/bit-reversal-trees#readme>
+homepage:       https://github.com/youqad/bit-reversal-trees#readme
+bug-reports:    https://github.com/youqad/bit-reversal-trees/issues
+author:         Younesse Kaddar
+maintainer:     younesse.kaddar@chch.ox.ac.uk
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    haskell_prompt.md
+    Victor_challenge.md
+
+source-repository head
+  type: git
+  location: https://github.com/youqad/bit-reversal-trees
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_bit_reversal_trees
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , containers
+    , hspec
+  default-language: Haskell2010
+
+executable bit-reversal-trees-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_bit_reversal_trees
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , bit-reversal-trees
+    , containers
+    , hspec
+  default-language: Haskell2010
+
+test-suite bit-reversal-trees-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_bit_reversal_trees
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , bit-reversal-trees
+    , containers
+    , hspec
+  default-language: Haskell2010
