@@ -14,13 +14,13 @@ client = OpenAI(
     project=os.getenv("OPENAI_PROJECT"),
 )
 
-MAX_ROUNDS = 10
+MAX_ROUNDS = 5
 GENERATOR_MODEL_NAME = "gpt-4o-mini"
 VERIFIER_MODEL_NAME = "gpt-4o-mini"
 QUICKCHECK_TEST_FILE = "../test/Spec.hs"
 HASKELL_PROMPT_FILE = "../haskell_prompt.md"
 LIB_FILE = "../src/Lib.hs"
-NUM_INITIAL_SOLUTIONS = 16
+NUM_INITIAL_SOLUTIONS = 4
 
 LIB_FILE_TEMPLATE = "../src/Lib_template.hs"
 SPEC_FILE_TEMPLATE = "../test/Spec_template.hs"
@@ -43,10 +43,14 @@ def chat_completion_request(messages, functions=NOT_GIVEN, function_call=NOT_GIV
         print(f"Exception: {e}")
         raise e
 
-def execute_function_call(message):
-    if message.tool_calls[0].function.name == "extract_invert_function":
-        return json.loads(message.tool_calls[0].function.arguments)
-    else:
-        raise ValueError(
-            f"🚨 Unknown function call: {message.tool_calls[0].function.name} 🚨"
-        )
+def execute_function_call(message, function_name):
+    if not message.tool_calls:
+        return None
+    
+    for tool_call in message.tool_calls:
+        if tool_call.function.name == function_name:
+            try:
+                return json.loads(tool_call.function.arguments)
+            except json.JSONDecodeError:
+                raise ValueError(f"Invalid JSON in function arguments: {tool_call.function.arguments}")
+    return None

@@ -110,11 +110,11 @@ verifier_function_calling_list = [
             "properties": {
                 "invert_function_code": {
                     "type": "string",
-                    "description": "The Haskell code for the invert function.",
+                    "description": "The Haskell code for the `invert :: Tree a -> Tree a` function.",
                 },
                 "satisfies_requirements": {
                     "type": "boolean",
-                    "description": "Whether the proposed invert function satisfies the syntactic requirements.",
+                    "description": "Whether the proposed invert function satisfies the syntactic requirements, i.e.:\n1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function. The ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function `invert' :: Bool -> Tree a -> Tree a`).\n2. It only uses recursion (no loops).\n3. It maintains purity (no side effects or mutability).",
                 },
             },
             "required": ["invert_function_code", "satisfies_requirements"],
@@ -140,7 +140,7 @@ def process_conversation(conversation, ghci):
         verifier_messages = [
             {
                 "role": "system",
-                "content": "You are a Haskell code verifier. Extract the invert function from the assistant's response and check if it satisfies the syntactic requirements.",
+                "content": "You are a Haskell code verifier. Extract the `invert :: Tree a -> Tree a` function from the assistant's response, and check if it satisfies the syntactic requirements.",
             },
             {
                 "role": "user",
@@ -156,35 +156,38 @@ def process_conversation(conversation, ghci):
         )
 
         assistant_verifier_message = response_verifier.choices[0].message
+        result_invert_function = execute_function_call(assistant_verifier_message, "extract_invert_function")
 
-        result = execute_function_call(assistant_verifier_message)
-
-        invert_code = result.get("invert_function_code")
-        satisfies_requirements = result.get("satisfies_requirements")
-
-        if not satisfies_requirements:
-            feedback = (
-                "The proposed invert function does not satisfy the syntactic requirements. "
-                "Please revise your implementation."
-            )
-            print(colored("❌ Syntactic check failed.", "red"))
-            print(colored(f"Assistant's code:\n{invert_code}", "yellow"))
+        if not result_invert_function:
+            print(colored("❌ Verifier did not return a function call. Skipping this response.", "red"))
+            feedback = "The verifier was unable to find the `invert :: Tree a -> Tree a` function in your response. Please provide a clear implementation of the invert function."
         else:
-            tests_passed, test_output = run_tests(idx, invert_code, ghci)
+            invert_code = result_invert_function.get("invert_function_code")
+            satisfies_requirements = result_invert_function.get("satisfies_requirements")
 
-            if tests_passed:
-                print(colored("🎉 Successfully found a valid implementation!", "green"))
-                print(colored("Assistant's code:", "cyan"))
-                print(colored(invert_code, "yellow"))
-                break
-            else:
+            if not satisfies_requirements:
                 feedback = (
-                    "Your invert function is incorrect. "
-                    "Here is the test output:\n"
-                    + test_output
+                    "The proposed invert function does not satisfy the syntactic requirements. "
+                    "Please revise your implementation."
                 )
-                print(colored("Assistant's code:", "cyan"))
-                print(colored(invert_code, "yellow"))
+                print(colored("❌ Syntactic check failed.", "red"))
+                print(colored(f"Assistant's code:\n{invert_code}", "yellow"))
+            else:
+                tests_passed, test_output = run_tests(idx, invert_code, ghci)
+
+                if tests_passed:
+                    print(colored("🎉 Successfully found a valid implementation!", "green"))
+                    print(colored("Assistant's code:", "cyan"))
+                    print(colored(invert_code, "yellow"))
+                    break
+                else:
+                    feedback = (
+                        "Your invert function is incorrect. "
+                        "Here is the test output:\n"
+                        + test_output
+                    )
+                    print(colored("Assistant's code:", "cyan"))
+                    print(colored(invert_code, "yellow"))
 
         messages.append({"role": "assistant", "content": assistant_content})
         messages.append({"role": "user", "content": feedback})
