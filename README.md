@@ -19,7 +19,18 @@ For full details of the challenge, see:
 
 ### Prerequisites
 
+#### Haskell
+
 Make sure you have [Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/) installed on your system.
+
+#### Python
+
+```sh
+cd python
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ### Building the Project
 
@@ -33,6 +44,13 @@ To run the tests, run:
 
 ```bash
 stack test
+```
+
+To run the Python search, run:
+
+```bash
+cd python
+python solve_challenge.py
 ```
 
 ## License
