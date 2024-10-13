@@ -3,7 +3,11 @@ import json
 import subprocess
 import concurrent.futures
 import copy
-from .utils import *
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath("../../"))
+sys.path.insert(0, os.path.abspath("../"))
+from utils import *
 import pexpect
 import weave
 from termcolor import colored
