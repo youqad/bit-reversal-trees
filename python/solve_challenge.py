@@ -217,7 +217,7 @@ def process_conversation(conversation, ghci):
     while conversation["round_num"] <= MAX_ROUNDS:
         print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
 
-        response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME)
+        response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME, temperature=1)
 
         assistant_message = response.choices[0].message
         assistant_content = assistant_message.content
