@@ -106,7 +106,8 @@ def extract_failed_info(output):
             break
     
     if start_index and end_index:
-        return '\n'.join(lines[start_index:end_index])
+        failed_info = '\n'.join(lines[start_index:end_index])
+        return failed_info.replace("Inverted flattened:", "Your inverted flattened:")
     else:
         return "Failed to extract detailed failure information."
 
