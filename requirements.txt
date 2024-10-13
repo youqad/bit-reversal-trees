@@ -1,0 +1,6 @@
+openai
+tenacity
+termcolor
+python-dotenv
+weave
+pexpect

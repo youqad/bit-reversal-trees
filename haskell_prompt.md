@@ -3,7 +3,7 @@
 data Tree a = Leaf a | Node (Tree a) (Tree a) 
     deriving (Eq, Show)
 
-{- Your goal is to implement an `invert` function that performs a bit-reversal
+{- Your goal is to implement an `invert :: Tree a -> Tree a` function that performs a bit-reversal
 permutation on a `Tree`. Here's what we mean by that:
 
 1. Each leaf in the binary tree has a path leading to it, which can be 
@@ -12,14 +12,13 @@ permutation on a `Tree`. Here's what we mean by that:
 3. For example, a leaf at path `[False, False, True]` (left, left, right) would be swapped
    with the leaf at path `[True, False, False]` (right, left, left).
 
-Implementation requirements:
-1. The `invert :: Tree a -> Tree a` function that you will implement must be a standalone, pure, recursive function that does NOT rely on any helper function.
-2. Only use the `Tree` type defined above.
-3. Only use recursion (no loops).
-4. Maintain purity (no side effects or mutability).
+MANDATORY SYNTACTIC REQUIREMENTS:
+1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function. The ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function `invert' :: Bool -> Tree a -> Tree a`). But know that relying on such a helper function is not necessary: there exist solutions that do not require any helper function.
+2. Only use recursion (no loops).
+3. Maintain purity (no side effects or mutability).
 
-This is a hard problem, so think deeply, and make sure to carefully double-check your solution against the tests.
-But I can guarantee you that it is solvable within the given constraints. Keep trying and don't give up!
+This is a hard problem, so think deeply and carefully double-check your solution against the tests.
+I guarantee you that it is solvable within the constraints. Keep trying and don't give up!
 -}
 
 -- Implement the `invert` function:
@@ -55,20 +54,15 @@ expectedTree3 = Node (Node (Node (Node (Leaf 10) (Leaf 11)) (Node (Leaf 9) (Leaf
                      (Node (Node (Node (Leaf 14) (Leaf 15)) (Node (Leaf 1) (Leaf 12)))
                            (Node (Node (Leaf 6) (Leaf 5)) (Node (Leaf 7) (Leaf 3))))
 
-main :: IO ()
 main = do
-    let tests = [
-            ("Test 1 (Depth 3)", testTree1, expectedTree1),
-            ("Test 2 (Depth 3)", testTree2, expectedTree2),
-            ("Test 3 (Depth 4)", testTree3, expectedTree3)
-        ]
-    
-    mapM_ (\(testName, input, expected) -> do
-        putStrLn testName
+    mapM_ (\(input, expected) -> do
         putStrLn "Input:"
         print input
         putStrLn "Expected output:"
         print expected
         putStrLn "Actual output:"
-        print (invert input)) tests
+        print (invert input)
+    ) [(testTree1, expectedTree1),
+       (testTree2, expectedTree2),
+       (testTree3, expectedTree3)]
 ```
