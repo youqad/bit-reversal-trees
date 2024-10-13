@@ -14,55 +14,83 @@ from termcolor import colored
 from tqdm import tqdm
 from pprint import pprint
 from dotenv import load_dotenv, find_dotenv
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="wandb")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="weave")
+
 load_dotenv(find_dotenv())
 
-weave.init('bit-reversal-trees')
+# weave.init('bit-reversal-trees')
+
+import sys
 
 def create_ghci_process():
-    ghci = pexpect.spawn('stack ghci --ghci-options=-ignore-dot-ghci ../test/DynamicSpec.hs', encoding='utf-8')
+    print("Starting GHCi process...")
+    # Set logfile to sys.stdout to print GHCi output to the console
+    ghci = pexpect.spawn(
+        'stack ghci --ghci-options=-ignore-dot-ghci ../test/DynamicSpec.hs',
+        encoding='utf-8',
+        logfile=sys.stdout  # Add this line
+    )
+    ghci.expect('GHCi, version.*', timeout=60)  # Wait for GHCi to start
+    print("GHCi started. Setting up environment...")
     ghci.sendline(':set -ignore-dot-ghci')
     ghci.sendline(':set -XOverloadedStrings')
     ghci.sendline(':set -XScopedTypeVariables')
     ghci.sendline(':set -XTemplateHaskell')
     ghci.sendline(':set +m')
-    ghci.sendline(':set prompt "\ESC[1;34m\STX%s\n\ESC[0;34m\STXλ> \ESC[m\STX"')
-    ghci.expect_exact('λ> ')
+    ghci.sendline(':set prompt "ghci_prompt> "')
+    ghci.expect_exact('ghci_prompt> ', timeout=30)
+    
+    print("Verifying testInvert availability...")
+    ghci.sendline(':t testInvert')
+    index = ghci.expect(['testInvert ::', 'Not in scope'], timeout=30)
+    if index == 1:
+        raise Exception("testInvert function is not available in the GHCi environment")
+    
+    ghci.expect_exact('ghci_prompt> ', timeout=30)
+    print("GHCi process ready.")
     return ghci
-
 
 def run_tests(invert_code, ghci):
     """
     Run Hspec tests and return the result by sending the invert code directly into GHCi.
     """
     try:
-        ghci.expect_exact('λ> ')
-        # Use :{ and :} to enter multi-line mode in GHCi
+        print("Sending invert code to GHCi...")
         ghci.sendline(':{')
-        ghci.sendline('let ' + invert_code.replace('\n', '\n    '))
+        ghci.sendline('let ' + invert_code.strip().replace('\n', '\n    '))
         ghci.sendline(':}')
-        ghci.expect_exact('λ> ')
+        print("Waiting for GHCi prompt after sending code...")
+        ghci.expect_exact('ghci_prompt> ', timeout=30)
 
-        # Run the tests
+        print("Running testInvert...")
         ghci.sendline('testInvert invert')
-        index = ghci.expect(['All examples passed', 'Failures:', pexpect.EOF, pexpect.TIMEOUT], timeout=120)
-        output = ghci.before + ghci.after
 
-        if 'Failures:' in output:
-            start = output.index('Invert Function for Bit-Reversal Trees')
-            end = output.index('Failures:') + len('Failures:')
-            relevant_output = output[start:end].strip()
-        else:
-            relevant_output = "All examples passed"
+        print("Waiting for test results...")
+        ghci.expect_exact('ghci_prompt> ', timeout=120)
 
-        if 'All examples passed' in relevant_output:
+        # The output between sending 'testInvert invert' and the next prompt
+        output = ghci.before
+        # print(f"Test output:\n{output}")
+
+        if '+++ OK, passed' in output:
             print(colored("✅ All tests passed!", "green"))
-            return True, relevant_output
-        else:
+            return True, output
+        elif 'Failures:' in output or 'error:' in output:
             print(colored("❌ Tests failed.", "red"))
-            return False, relevant_output
+            return False, output
+        else:
+            print(colored("❌ Unknown test result.", "red"))
+            return False, output
 
+    except pexpect.TIMEOUT:
+        print(colored("❌ Timeout while running tests.", "red"))
+        print(f"Last output: {ghci.before}")
+        return False, "Timeout while running tests"
     except Exception as e:
-        print(colored("❌ Error running tests.", "red"))
+        print(colored(f"❌ Error running tests: {str(e)}", "red"))
+        print(f"Last output: {ghci.before}")
         return False, str(e)
 
 def main():
@@ -114,9 +142,15 @@ def main():
         print(colored("Solutions have been saved to 'solutions.txt' 🚀", "light_green"))
     else:
         print(colored("No solution found. ❌", "magenta"))
-    ghci.sendline(':q')  # Quit GHCi
-    ghci.expect(pexpect.EOF)
-    ghci.terminate()
+    
+    # Gracefully terminate the GHCi process
+    try:
+        ghci.sendline(':q')
+        ghci.expect(pexpect.EOF, timeout=5)
+    except pexpect.TIMEOUT:
+        print(colored("GHCi didn't terminate as expected. Forcing termination.", "yellow"))
+    finally:
+        ghci.close(force=True)
 
 
 def process_conversation(conversation, ghci):
@@ -157,13 +191,13 @@ def process_conversation(conversation, ghci):
 verifier_function_calling_list = [
     {
         "name": "extract_invert_function",
-        "description": "Extract the invert function and verify syntactic requirements.",
+        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
         "parameters": {
             "type": "object",
             "properties": {
                 "invert_function_code": {
                     "type": "string",
-                    "description": "The Haskell code for the `invert :: Tree a -> Tree a` function.",
+                    "description": "The Haskell code for the `invert :: Tree a -> Tree a` function, and ONLY this function.",
                 },
                 "satisfies_requirements": {
                     "type": "boolean",

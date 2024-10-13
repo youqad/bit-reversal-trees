@@ -4,7 +4,12 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 from dotenv import load_dotenv, find_dotenv
 import os
 import json
-import weave
+
+try:
+    import weave
+except ImportError:
+    print("Warning: weave module not found. No LLM logging will be done.")
+    weave = None
 
 load_dotenv(find_dotenv())
 

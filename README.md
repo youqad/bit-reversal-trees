@@ -53,6 +53,13 @@ cd python
 python solve_challenge.py
 ```
 
+To run the Python tests, run:
+
+```bash
+cd python
+python -m pytest test_solve_challenge.py
+```
+
 ## License
 
 The code in this repo is open source and available under the [MIT License](LICENSE).
