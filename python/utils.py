@@ -19,13 +19,13 @@ client = OpenAI(
     project=os.getenv("OPENAI_PROJECT"),
 )
 
-MAX_ROUNDS = 5
+MAX_ROUNDS = os.getenv("MAX_ROUNDS", 5)
+NUM_INITIAL_SOLUTIONS = os.getenv("NUM_INITIAL_SOLUTIONS", 4)
 GENERATOR_MODEL_NAME = os.getenv("GENERATOR_MODEL_NAME", "gpt-4o")
 VERIFIER_MODEL_NAME = os.getenv("VERIFIER_MODEL_NAME", "gpt-4o-mini")
 QUICKCHECK_TEST_FILE = "../test/Spec.hs"
 HASKELL_PROMPT_FILE = "../haskell_prompt.md"
 LIB_FILE = "../src/Lib.hs"
-NUM_INITIAL_SOLUTIONS = 4
 
 @weave.op()
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(5))
