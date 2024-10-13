@@ -115,8 +115,10 @@ def main():
     with open(HASKELL_PROMPT_FILE, "r") as f:
         initial_prompt = f.read()
 
+    initial_role = "user" if GENERATOR_MODEL_NAME.startswith("o1") else "system"
+
     initial_message = {
-        "role": "system",
+        "role": initial_role,
         "content": initial_prompt,
     }
 

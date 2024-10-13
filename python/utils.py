@@ -20,8 +20,8 @@ client = OpenAI(
 )
 
 MAX_ROUNDS = 5
-GENERATOR_MODEL_NAME = "gpt-4o"
-VERIFIER_MODEL_NAME = "gpt-4o-mini"
+GENERATOR_MODEL_NAME = os.getenv("GENERATOR_MODEL_NAME", "gpt-4o")
+VERIFIER_MODEL_NAME = os.getenv("VERIFIER_MODEL_NAME", "gpt-4o-mini")
 QUICKCHECK_TEST_FILE = "../test/Spec.hs"
 HASKELL_PROMPT_FILE = "../haskell_prompt.md"
 LIB_FILE = "../src/Lib.hs"
