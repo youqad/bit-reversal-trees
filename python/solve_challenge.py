@@ -15,14 +15,13 @@ from tqdm import tqdm
 from pprint import pprint
 from dotenv import load_dotenv, find_dotenv
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="wandb")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="weave")
 
 load_dotenv(find_dotenv())
 
-# weave.init('bit-reversal-trees')
-
-import sys
+weave.init('bit-reversal-trees')
 
 def create_ghci_process():
     print("Starting GHCi process...")
@@ -129,7 +128,7 @@ def main():
         for conv in conversations:
             full_conv_or_solution, success = process_conversation(conv, ghci)
             if success:
-                print(colored(f"Conversation {conv['idx']}: Found a valid implementation!", "green"))
+                print(colored(f"Conversation {conv['idx'] + 1}: Found a valid implementation!", "green"))
                 print(colored(full_conv_or_solution, "light_green"))
                 solutions.append(full_conv_or_solution)
             pbar.update(1)
@@ -163,10 +162,10 @@ def process_conversation(conversation, ghci):
         return feedback, success
     messages.append({"role": "user", "content": feedback})
 
-    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
+    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx + 1}", leave=False)
 
     while conversation["round_num"] <= MAX_ROUNDS:
-        print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num'] + 1} ===\n", "cyan"))
+        print(colored(f"\n=== Conversation {idx + 1} - Round {conversation['round_num']} ===\n", "cyan"))
 
         response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME)
 
@@ -183,7 +182,7 @@ def process_conversation(conversation, ghci):
         conversation["round_num"] += 1
         pbar.update(1)
     else:
-        print(colored(f"🚫 Conversation {idx}: Reached maximum number of rounds without finding a valid implementation.", "red"))
+        print(colored(f"🚫 Conversation {idx + 1}: Reached maximum number of rounds without finding a valid implementation.", "red"))
     pbar.close()
 
     return conversation, False
