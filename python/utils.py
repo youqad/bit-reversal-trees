@@ -1,4 +1,5 @@
-from openai import OpenAI, NOT_GIVEN
+from openai import OpenAI
+from openai._types import NOT_GIVEN
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 from dotenv import load_dotenv, find_dotenv
 import os
@@ -14,7 +15,7 @@ client = OpenAI(
 )
 
 MAX_ROUNDS = 10
-GENERATOR_MODEL_NAME = "o1-mini"
+GENERATOR_MODEL_NAME = "gpt-4o-mini"
 VERIFIER_MODEL_NAME = "gpt-4o-mini"
 QUICKCHECK_TEST_FILE = "../test/Spec.hs"
 HASKELL_PROMPT_FILE = "../haskell_prompt.md"
