@@ -12,7 +12,7 @@ import pexpect
 import weave
 from termcolor import colored
 from tqdm import tqdm
-
+from pprint import pprint
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
@@ -30,7 +30,7 @@ def create_ghci_process():
     return ghci
 
 
-def run_tests(idx, invert_code, ghci):
+def run_tests(invert_code, ghci):
     """
     Run Hspec tests and return the result by sending the invert code directly into GHCi.
     """
@@ -96,14 +96,57 @@ def main():
 
     ghci = create_ghci_process()
 
+    solutions = []
     with tqdm(total=len(conversations), desc="Processing conversations") as pbar:
         for conv in conversations:
-            process_conversation(conv, ghci)
+            full_conv_or_solution, success = process_conversation(conv, ghci)
+            if success:
+                print(colored(f"Conversation {conv['idx']}: Found a valid implementation!", "green"))
+                print(colored(full_conv_or_solution, "light_green"))
+                solutions.append(full_conv_or_solution)
             pbar.update(1)
 
+    print(colored(f"Found {len(solutions)} solutions!", "green"))
+    pprint(solutions)
     ghci.sendline(':q')  # Quit GHCi
     ghci.expect(pexpect.EOF)
     ghci.terminate()
+
+
+def process_conversation(conversation, ghci):
+    messages = conversation["messages"]
+    idx = conversation["idx"]
+
+    first_assistant_message = messages[-1]
+    feedback, success = verify_response(first_assistant_message.content, ghci)
+    if success:
+        return feedback, success
+    messages.append({"role": "user", "content": feedback})
+
+    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
+
+    while conversation["round_num"] <= MAX_ROUNDS:
+        print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num'] + 1} ===\n", "cyan"))
+
+        response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME)
+
+        assistant_message = response.choices[0].message
+        assistant_content = assistant_message.content
+
+        feedback, success = verify_response(assistant_content, ghci)
+
+        if success:
+            return feedback, success
+
+        messages.append({"role": "user", "content": feedback})
+
+        conversation["round_num"] += 1
+        pbar.update(1)
+    else:
+        print(colored(f"🚫 Conversation {idx}: Reached maximum number of rounds without finding a valid implementation.", "red"))
+    pbar.close()
+
+    return conversation, False
 
 verifier_function_calling_list = [
     {
@@ -127,82 +170,66 @@ verifier_function_calling_list = [
 ]
 verifier_function_calling_schema = {"name": "extract_invert_function"}
 
-
-def process_conversation(conversation, ghci):
-    messages = conversation["messages"]
-    idx = conversation["idx"]
+def verify_response(assistant_content, ghci):
+    success = False
     feedback = None
 
-    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
+    verifier_messages = [
+        {
+            "role": "system",
+            "content": "You are a Haskell code verifier. Extract the `invert :: Tree a -> Tree a` function from the assistant's response, and check if it satisfies the syntactic requirements.",
+        },
+        {
+            "role": "user",
+            "content": assistant_content,
+        },
+    ]
 
-    while conversation["round_num"] <= MAX_ROUNDS:
-        print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
+    response_verifier = chat_completion_request(
+        verifier_messages,
+        model=VERIFIER_MODEL_NAME,
+        functions=verifier_function_calling_list,
+        function_call=verifier_function_calling_schema
+    )
 
-        response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME)
+    assistant_verifier_message = response_verifier.choices[0].message
+    result_invert_function = execute_function_call(assistant_verifier_message, "extract_invert_function")
 
-        assistant_message = response.choices[0].message
-        assistant_content = assistant_message.content
-
-        verifier_messages = [
-            {
-                "role": "system",
-                "content": "You are a Haskell code verifier. Extract the `invert :: Tree a -> Tree a` function from the assistant's response, and check if it satisfies the syntactic requirements.",
-            },
-            {
-                "role": "user",
-                "content": assistant_content,
-            },
-        ]
-
-        response_verifier = chat_completion_request(
-            verifier_messages,
-            model=VERIFIER_MODEL_NAME,
-            functions=verifier_function_calling_list,
-            function_call=verifier_function_calling_schema
-        )
-
-        assistant_verifier_message = response_verifier.choices[0].message
-        result_invert_function = execute_function_call(assistant_verifier_message, "extract_invert_function")
-
-        if not result_invert_function:
-            print(colored("❌ Verifier did not return a function call. Skipping this response.", "red"))
-            feedback = "The verifier was unable to find the `invert :: Tree a -> Tree a` function in your response. Please provide a clear implementation of the invert function."
-        else:
-            invert_code = result_invert_function.get("invert_function_code")
-            satisfies_requirements = result_invert_function.get("satisfies_requirements")
-
-            if not satisfies_requirements:
-                feedback = (
-                    "The proposed invert function does not satisfy the syntactic requirements. "
-                    "Please revise your implementation."
-                )
-                print(colored("❌ Syntactic check failed.", "red"))
-                print(colored(f"Assistant's code:\n{invert_code}", "yellow"))
-            else:
-                tests_passed, test_output = run_tests(idx, invert_code, ghci)
-
-                if tests_passed:
-                    print(colored("🎉 Successfully found a valid implementation!", "green"))
-                    print(colored("Assistant's code:", "cyan"))
-                    print(colored(invert_code, "yellow"))
-                    break
-                else:
-                    feedback = (
-                        "Your invert function is incorrect. "
-                        "Here is the test output:\n"
-                        + test_output
-                    )
-                    print(colored("Assistant's code:", "cyan"))
-                    print(colored(invert_code, "yellow"))
-
-        messages.append({"role": "assistant", "content": assistant_content})
-        messages.append({"role": "user", "content": feedback})
-
-        conversation["round_num"] += 1
-        pbar.update(1)
+    if not result_invert_function:
+        print(colored("❌ Verifier did not return a function call. Skipping this response.", "red"))
+        feedback = "The verifier was unable to find the `invert :: Tree a -> Tree a` function in your response. Please provide a clear implementation of the invert function."
     else:
-        print(colored(f"🚫 Conversation {idx}: Reached maximum number of rounds without finding a valid implementation.", "red"))
-    pbar.close()
+        invert_code = result_invert_function.get("invert_function_code")
+        satisfies_requirements = result_invert_function.get("satisfies_requirements")
+
+        if not satisfies_requirements:
+            feedback = (
+                "The proposed invert function does not satisfy the syntactic requirements. "
+                "Please revise your implementation."
+            )
+            print(colored("❌ Syntactic check failed.", "red"))
+            print(colored(f"Assistant's code:\n{invert_code}", "yellow"))
+        else:
+            tests_passed, test_output = run_tests(invert_code, ghci)
+
+            if tests_passed:
+                print(colored("🎉 Successfully found a valid implementation!", "green"))
+                print(colored("Assistant's code:", "cyan"))
+                print(colored(invert_code, "yellow"))
+                success = True
+                feedback = invert_code
+            else:
+                feedback = (
+                    "Your invert function is incorrect. "
+                    "Here is the test output:\n"
+                    + test_output
+                )
+                print(colored("Assistant's code:", "cyan"))
+                print(colored(invert_code, "yellow"))
+
+    return feedback, success
+
+
 
 if __name__ == "__main__":
     main()
