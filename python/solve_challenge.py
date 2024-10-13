@@ -128,7 +128,7 @@ def process_conversation(conversation, ghci):
     if success:
         return feedback, success
     messages.append({"role": "user", "content": feedback})
-    
+
     pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
 
     while conversation["round_num"] <= MAX_ROUNDS:
@@ -183,7 +183,7 @@ def verify_response(assistant_content, ghci):
     verifier_messages = [
         {
             "role": "system",
-            "content": "You are a Haskell code verifier. Extract the `invert :: Tree a -> Tree a` function from the assistant's response, and check if it satisfies the syntactic requirements.",
+            "content": "You are a Haskell code verifier. Extract the `invert :: Tree a -> Tree a` function from the user's message, and check if it satisfies the syntactic requirements.",
         },
         {
             "role": "user",
