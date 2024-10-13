@@ -29,9 +29,9 @@ def create_ghci_process():
     ghci = pexpect.spawn(
         'stack ghci --ghci-options=-ignore-dot-ghci ../test/DynamicSpec.hs',
         encoding='utf-8',
-        logfile=sys.stdout  # Add this line
+        logfile=sys.stdout
     )
-    ghci.expect('GHCi, version.*', timeout=60)  # Wait for GHCi to start
+    ghci.expect('GHCi, version.*', timeout=60)
     print("GHCi started. Setting up environment...")
     ghci.sendline(':set -ignore-dot-ghci')
     ghci.sendline(':set -XOverloadedStrings')
@@ -69,16 +69,14 @@ def run_tests(invert_code, ghci):
         print("Waiting for test results...")
         ghci.expect_exact('ghci_prompt> ', timeout=120)
 
-        # The output between sending 'testInvert invert' and the next prompt
         output = ghci.before
-        # print(f"Test output:\n{output}")
 
         if '+++ OK, passed' in output:
             print(colored("✅ All tests passed!", "green"))
             return True, output
         elif 'Failures:' in output or 'error:' in output:
             print(colored("❌ Tests failed.", "red"))
-            return False, output
+            return False, extract_failed_info(output)
         else:
             print(colored("❌ Unknown test result.", "red"))
             return False, output
@@ -91,6 +89,26 @@ def run_tests(invert_code, ghci):
         print(colored(f"❌ Error running tests: {str(e)}", "red"))
         print(f"Last output: {ghci.before}")
         return False, str(e)
+
+def extract_failed_info(output):
+    """
+    Extract the relevant failure information from the test output.
+    """
+    lines = output.split('\n')
+    start_index = None
+    end_index = None
+    
+    for i, line in enumerate(lines):
+        if line.strip().startswith("Failed:"):
+            start_index = i
+        elif start_index and line.strip() == "":
+            end_index = i
+            break
+    
+    if start_index and end_index:
+        return '\n'.join(lines[start_index:end_index])
+    else:
+        return "Failed to extract detailed failure information."
 
 def main():
     with open(HASKELL_PROMPT_FILE, "r") as f:
@@ -110,7 +128,7 @@ def main():
     conversations = []
     for idx, choice in enumerate(response.choices):
         assistant_content = choice.message.content
-        messages = [copy.deepcopy(initial_message)]
+        messages = [initial_message]
         messages.append({
             "role": "assistant",
             "content": assistant_content,
@@ -118,7 +136,7 @@ def main():
         conversations.append({
             "messages": messages,
             "round_num": 1,
-            "idx": idx
+            "idx": idx + 1
         })
 
     ghci = create_ghci_process()
@@ -128,7 +146,7 @@ def main():
         for conv in conversations:
             full_conv_or_solution, success = process_conversation(conv, ghci)
             if success:
-                print(colored(f"Conversation {conv['idx'] + 1}: Found a valid implementation!", "green"))
+                print(colored(f"✨ Conversation {conv['idx']}: Found a valid implementation! 🎉 ✨", "green"))
                 print(colored(full_conv_or_solution, "light_green"))
                 solutions.append(full_conv_or_solution)
             pbar.update(1)
@@ -153,8 +171,14 @@ def main():
 
 
 def process_conversation(conversation, ghci):
-    messages = conversation["messages"]
+    """
+    Process a single conversation, including multiple rounds of verification.
+    """
     idx = conversation["idx"]
+
+    print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
+    
+    messages = conversation["messages"]
 
     first_assistant_message = messages[-1]
     feedback, success = verify_response(first_assistant_message["content"], ghci)
@@ -162,15 +186,18 @@ def process_conversation(conversation, ghci):
         return feedback, success
     messages.append({"role": "user", "content": feedback})
 
-    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx + 1}", leave=False)
+    conversation["round_num"] += 1
+
+    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
 
     while conversation["round_num"] <= MAX_ROUNDS:
-        print(colored(f"\n=== Conversation {idx + 1} - Round {conversation['round_num']} ===\n", "cyan"))
+        print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
 
         response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME)
 
         assistant_message = response.choices[0].message
         assistant_content = assistant_message.content
+        messages.append({"role": "assistant", "content": assistant_content})
 
         feedback, success = verify_response(assistant_content, ghci)
 
@@ -182,7 +209,7 @@ def process_conversation(conversation, ghci):
         conversation["round_num"] += 1
         pbar.update(1)
     else:
-        print(colored(f"🚫 Conversation {idx + 1}: Reached maximum number of rounds without finding a valid implementation.", "red"))
+        print(colored(f"🚫 Conversation {idx}: Reached maximum number of rounds without finding a valid implementation.", "red"))
     pbar.close()
 
     return conversation, False
