@@ -41,13 +41,12 @@ def chat_completion_request(messages, functions=NOT_GIVEN, function_call=NOT_GIV
         raise e
 
 def execute_function_call(message, function_name):
-    if not message.tool_calls:
+    if not message.function_call:
         return None
     
-    for tool_call in message.tool_calls:
-        if tool_call.function.name == function_name:
-            try:
-                return json.loads(tool_call.function.arguments)
-            except json.JSONDecodeError:
-                raise ValueError(f"Invalid JSON in function arguments: {tool_call.function.arguments}")
+    if message.function_call.name == function_name:
+        try:
+            return json.loads(message.function_call.arguments)
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON in function arguments: {message.function_call.arguments}")
     return None
