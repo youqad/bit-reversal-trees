@@ -19,8 +19,8 @@ client = OpenAI(
     project=os.getenv("OPENAI_PROJECT"),
 )
 
-MAX_ROUNDS = os.getenv("MAX_ROUNDS", 5)
-NUM_INITIAL_SOLUTIONS = os.getenv("NUM_INITIAL_SOLUTIONS", 4)
+MAX_ROUNDS = int(os.getenv("MAX_ROUNDS", 5))
+NUM_INITIAL_SOLUTIONS = int(os.getenv("NUM_INITIAL_SOLUTIONS", 4))
 GENERATOR_MODEL_NAME = os.getenv("GENERATOR_MODEL_NAME", "gpt-4o")
 VERIFIER_MODEL_NAME = os.getenv("VERIFIER_MODEL_NAME", "gpt-4o-mini")
 QUICKCHECK_TEST_FILE = "../test/Spec.hs"
