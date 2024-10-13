@@ -101,7 +101,8 @@ invertHuman (Node l@(Node _ _) r@(Node _ _)) =
 invertHuman t = t
 
 
--- With one extra bit of state, based on o1's implementation
+-- With one extra bit of state, we can adapt one of o1's implementations (`invertO1`)
+-- to create a working solution (`invertHumanBasedOnO1`) (that passes all the tests)
 invertO1 :: Tree a -> Tree a
 invertO1 (Leaf x) = Leaf x
 invertO1 (Node l r) = merge (invertO1 l) (invertO1 r)
@@ -109,8 +110,8 @@ invertO1 (Node l r) = merge (invertO1 l) (invertO1 r)
     merge (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
     merge (Node a b) (Node c d) = Node (merge a c) (merge b d)
   
-invert :: Tree a -> Tree a
-invert = invert' False
+invertHumanBasedOnO1 :: Tree a -> Tree a
+invertHumanBasedOnO1 = invert' False
   where
     invert' :: Bool -> Tree a -> Tree a
     invert' _ (Leaf x) = Leaf x

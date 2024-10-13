@@ -1,4 +1,4 @@
-# Bit-Reversal Trees
+# Victor Taelin's challenge: Bit-Reversal Trees
 
 This project implements and tests the bit reversal permutation on binary trees, as proposed in [Victor Taelin's challenge](https://x.com/VictorTaelin/status/1844886809005687270).
 

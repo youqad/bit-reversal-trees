@@ -19,7 +19,7 @@ Implementation requirements:
 4. Maintain purity (no side effects or mutability).
 
 This is a hard problem, so think deeply, and make sure to carefully double-check your solution against the tests.
-But I can guarantee you that it is definitely solvable within the given constraints. Keep trying and don't give up!
+But I can guarantee you that it is solvable within the given constraints. Keep trying and don't give up!
 -}
 
 -- Implement the `invert` function:
