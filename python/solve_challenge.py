@@ -122,25 +122,46 @@ def main():
         "content": initial_prompt,
     }
 
-    response = chat_completion_request(
-        [initial_message],
-        model=GENERATOR_MODEL_NAME,
-        n=NUM_INITIAL_SOLUTIONS
-    )
-
     conversations = []
-    for idx, choice in enumerate(response.choices):
-        assistant_content = choice.message.content
-        messages = [initial_message]
-        messages.append({
-            "role": "assistant",
-            "content": assistant_content,
-        })
-        conversations.append({
-            "messages": messages,
-            "round_num": 1,
-            "idx": idx + 1
-        })
+
+    if GENERATOR_MODEL_NAME.startswith("o1"):
+        # For o1 models, make separate requests (n>1 is not supported)
+        for idx in range(NUM_INITIAL_SOLUTIONS):
+            response = chat_completion_request(
+                [initial_message],
+                model=GENERATOR_MODEL_NAME,
+                n=1,
+                temperature=1
+            )
+            assistant_content = response.choices[0].message.content
+            messages = [initial_message, {
+                "role": "assistant",
+                "content": assistant_content,
+            }]
+            conversations.append({
+                "messages": messages,
+                "round_num": 1,
+                "idx": idx + 1
+            })
+    else:
+        # For other models, use a single request with n>1
+        response = chat_completion_request(
+            [initial_message],
+            model=GENERATOR_MODEL_NAME,
+            n=NUM_INITIAL_SOLUTIONS,
+            temperature=1
+        )
+        for idx, choice in enumerate(response.choices):
+            assistant_content = choice.message.content
+            messages = [initial_message, {
+                "role": "assistant",
+                "content": assistant_content,
+            }]
+            conversations.append({
+                "messages": messages,
+                "round_num": 1,
+                "idx": idx + 1
+            })
 
     ghci = create_ghci_process()
 
