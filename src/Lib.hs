@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables, RankNTypes #-}
+
 module Lib
     ( Tree(..)
     , constructTree
@@ -11,9 +13,10 @@ module Lib
     ) where
 
 import qualified Data.Tree as DT
-import Data.Bits
+import qualified Data.Bits as B
 import Text.ParserCombinators.ReadP
 import Control.Applicative ((<|>))
+import Test.QuickCheck
 
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Eq)
 
@@ -40,6 +43,19 @@ instance (Read a) => Read (Tree a) where
           right <- parseTree
           char ')'
           return (Node left right)
+
+-- Generator for random trees of a given depth with random permutations of leaves
+genTree :: forall a. (Num a, Enum a) => Int -> Gen (Tree a)
+genTree depth = do
+  let n = 2 ^ depth
+  xs <- shuffle [0 .. n - 1]
+  let (tree, _) = constructTree depth xs :: (Tree a, [a])
+  return tree
+
+instance (Arbitrary a, Num a, Enum a) => Arbitrary (Tree a) where
+  arbitrary = do
+    depth <- choose (1, 5)
+    genTree depth
 
 --------------------------------------------------------------------------------
 -- Tree utilities
@@ -68,6 +84,7 @@ flattenTree (Leaf x) = [x]
 flattenTree (Node left right) = flattenTree left ++ flattenTree right
 
 
+
 --------------------------------------------------------------------------------
 -- Ground-truth bit-reversal permutation implementation
 --------------------------------------------------------------------------------
@@ -75,7 +92,7 @@ flattenTree (Node left right) = flattenTree left ++ flattenTree right
 -- Reverse the bits of an integer
 reverseBits :: Int -> Int -> Int
 reverseBits numBits n =
-  foldl (\acc i -> ((n `shiftR` i) .&. 1) .|. (acc `shiftL` 1)) 0 [0..(numBits - 1)]
+  foldl (\acc i -> ((n `B.shiftR` i) B..&. 1) B..|. (acc `B.shiftL` 1)) 0 [0..(numBits - 1)]
 
 -- Perform a bit-reversal permutation on a list based on indices
 bitReversePermutation :: [a] -> [a]
@@ -133,12 +150,6 @@ invertHumanBasedOnO1 = invert' False
 --             (Node a b', Node c d) -> Node (Node a c) (Node b' d)
 --             _ -> Node l r
 
-
-
-
-
-
-
-
-
-
+-- Placeholder for the invert function
+invert :: Tree a -> Tree a
+invert = invertHumanBasedOnO1

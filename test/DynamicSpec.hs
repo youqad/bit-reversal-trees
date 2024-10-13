@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main (main) where
+module DynamicSpec (main, Tree (Leaf, Node), testInvert) where
 
-import Lib (Tree (Leaf, Node), bitReversePermutation, depthOfTree, flattenTree, invert)
+import Lib (Tree (Leaf, Node), bitReversePermutation, depthOfTree, flattenTree, invertHuman)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
-main :: IO ()
-main = hspec $ do
+testInvert :: (Tree Int -> Tree Int) -> IO ()
+testInvert invert = hspec $ do
   describe "Invert Function for Bit-Reversal Trees" $ do
     prop "correctly performs bit-reversal permutation on tree leaves" $
       \(tree :: Tree Int) ->
@@ -35,3 +35,7 @@ main = hspec $ do
                     ++ show ys_flat
                 )
               $ ys_flat `shouldBe` ys_expected
+
+main :: IO ()
+main = do
+  putStrLn "Run `testInvert invert` with an `invert :: Tree Int -> Tree Int` function to test your implementation."
