@@ -4,3 +4,4 @@ termcolor
 python-dotenv
 weave
 pexpect
+tqdm

@@ -11,6 +11,8 @@ from utils import *
 import pexpect
 import weave
 from termcolor import colored
+from tqdm import tqdm
+
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
@@ -94,8 +96,10 @@ def main():
 
     ghci = create_ghci_process()
 
-    for conv in conversations:
-        process_conversation(conv, ghci)
+    with tqdm(total=len(conversations), desc="Processing conversations") as pbar:
+        for conv in conversations:
+            process_conversation(conv, ghci)
+            pbar.update(1)
 
     ghci.sendline(':q')  # Quit GHCi
     ghci.expect(pexpect.EOF)
@@ -128,6 +132,8 @@ def process_conversation(conversation, ghci):
     messages = conversation["messages"]
     idx = conversation["idx"]
     feedback = None
+
+    pbar = tqdm(total=MAX_ROUNDS, desc=f"Conversation {idx}", leave=False)
 
     while conversation["round_num"] <= MAX_ROUNDS:
         print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
@@ -193,9 +199,10 @@ def process_conversation(conversation, ghci):
         messages.append({"role": "user", "content": feedback})
 
         conversation["round_num"] += 1
-
+        pbar.update(1)
     else:
         print(colored(f"🚫 Conversation {idx}: Reached maximum number of rounds without finding a valid implementation.", "red"))
+    pbar.close()
 
 if __name__ == "__main__":
     main()
