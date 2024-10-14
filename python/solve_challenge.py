@@ -177,7 +177,7 @@ def main():
 
     print(colored(f"Found {len(solutions)} solutions!", "green"))
     if solutions:
-        with open("solutions.txt", "a+") as f:
+        with open("solutions_final.txt", "a+") as f:
             for solution in solutions:
                 f.write(solution + "\n\n")
         print(colored("Solutions have been saved to 'solutions.txt' 🚀", "light_green"))
@@ -207,6 +207,7 @@ def process_conversation(conversation, ghci):
     first_assistant_message = messages[-1]
     feedback, success = verify_response(first_assistant_message["content"], ghci)
     if success:
+        write_solution(feedback)
         return feedback, success
     messages.append({"role": "user", "content": feedback})
 
@@ -226,6 +227,7 @@ def process_conversation(conversation, ghci):
         feedback, success = verify_response(assistant_content, ghci)
 
         if success:
+            write_solution(feedback)
             return feedback, success
 
         messages.append({"role": "user", "content": feedback})
@@ -237,6 +239,14 @@ def process_conversation(conversation, ghci):
     pbar.close()
 
     return conversation, False
+
+def write_solution(solution):
+    """
+    Write a solution to the 'solutions.txt' file.
+    """
+    with open("solutions.txt", "a+") as f:
+        f.write(solution + "\n\n")
+    print(colored("Solution has been saved to 'solutions.txt' 🚀", "light_green"))
 
 verifier_function_calling_list = [
     {
