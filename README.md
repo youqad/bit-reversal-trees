@@ -50,12 +50,12 @@ My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/Victor
 
 where:
 
-- `src/Lib.hs`: Contains Haskell implementations of the bit-reversal tree inversion (see [`haskell_prompt.md`](haskell_prompt.md) for the prompt used to generate the AI ones)
-- `test/Spec.hs`: QuickCheck tests for the Haskell implementations in `src/Lib.hs`
-- `test/DynamicSpec.hs`: QuickCheck tests for the Haskell implementations generated during the LLM search
-- `python/solve_challenge.py`: Python script to search for valid Haskell solutions using LLMs
-- `python/utils.py`: Utility functions for the Python LLM search
-- `python/test_solve_challenge.py`: Pytest file for testing the Python-GHCi integration for the LLM search
+- [`src/Lib.hs`](src/Lib.hs): Contains Haskell implementations of the bit-reversal tree inversion (see [`haskell_prompt.md`](haskell_prompt.md) for the prompt used to generate the AI ones)
+- [`test/Spec.hs`](test/Spec.hs): QuickCheck tests for the Haskell implementations in `src/Lib.hs`
+- [`test/DynamicSpec.hs`](test/DynamicSpec.hs): QuickCheck tests for the Haskell implementations generated during the LLM search
+- [`python/solve_challenge.py`](python/solve_challenge.py): Python script to search for valid Haskell solutions using LLMs
+- [`python/utils.py`](python/utils.py): Utility functions for the Python LLM search
+- [`python/test_solve_challenge.py`](python/test_solve_challenge.py): Pytest file for testing the Python-GHCi integration for the LLM search
 
 ## Getting Started
 
@@ -99,7 +99,7 @@ where:
    ```
 
 5. Set up your environment variables:
-   Copy the `.env.example` file to `.env` and fill in the required values:
+   Copy the [`.env.example`](.env.example) file to `.env` and fill in the required values:
    ```
    OPENAI_API_KEY=your_api_key_here
    OPENAI_ORGANIZATION=your_organization_id
@@ -107,8 +107,8 @@ where:
    WANDB_API_KEY=your_wandb_api_key
    GENERATOR_MODEL_NAME=gpt-4o
    VERIFIER_MODEL_NAME=gpt-4o-mini
+   NUM_INITIAL_SOLUTIONS=10 # Number of suggested solutions to the initial prompt (each of them giving rise to a conversation)
    MAX_ROUNDS=8 # Number of rounds/turns per conversation, in the LLM search
-   NUM_INITIAL_SOLUTIONS=10 # Number of initial solutions to the prompt to generate (each of them give rise to a conversation)
    ```
 
 6. Run the Python LLM search:
@@ -123,21 +123,21 @@ where:
 
 ## Haskell Implementations
 
-The `src/Lib.hs` file contains several Haskell implementations of the bit-reversal tree inversion function, including:
+The [`src/Lib.hs`](src/Lib.hs) file contains several Haskell implementations of the bit-reversal tree inversion function, including:
 
-- `invertHuman`: My reference implementation, written by hand
-- `invertO1`: One of o1-preview's solutions, which passes all the tests but does not satisfy the constraint of not using any helper function
+- `invertHuman`: My own reference implementation, written by hand, which satisfies all the constraints
+- `invertO1`: [One of o1-preview's solutions](https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76), which passes all the tests but does not satisfy the constraint of not using any helper function
 - `invertHumanBasedOnO1`: An adaptation of o1-preview's implementation by hand to satisfy the constraint of not using any helper function
-- `invertO1MiniWithHelperFns`: One of o1-preview's solutions, which passes all the tests but does not satisfy the constraint of not using any helper function
+- `invertO1MiniWithHelperFns`: [One of o1-mini's solutions](https://gist.github.com/youqad/e8870ec417dd37606d06a47412ce5e3b#file-o1-mini-01928789-1b47-74a3-8a72-0cda64404bae-json-L51), which passes all the tests but does not satisfy the constraint of not using any helper function
 
 ## Python LLM Search
 
-The `python/solve_challenge.py` script uses OpenAI's GPT models to search for valid Haskell implementations of the bit-reversal tree inversion function. It follows these steps:
+The [`python/solve_challenge.py`](python/solve_challenge.py) script uses OpenAI's GPT models to search for valid Haskell implementations of the bit-reversal tree inversion function. It follows these steps:
 
 1. Generate initial solutions to the prompt [`haskell_prompt.md`](haskell_prompt.md) using the generator LLM (`GENERATOR_MODEL_NAME` in `.env`)
 
 2. For each one of them, verify the syntactic correctness using the verifier LLM (`VERIFIER_MODEL_NAME` in `.env`)
-3. For the syntactically correct ones, run the suggested solutions through the Haskell QuickCheck tests in `test/DynamicSpec.hs`
+3. For the syntactically correct ones, run the suggested solutions through the Haskell QuickCheck tests in [`test/DynamicSpec.hs`](test/DynamicSpec.hs)
 
 4. Rinse and repeat: iterate and the refine solutions based on the test results
 

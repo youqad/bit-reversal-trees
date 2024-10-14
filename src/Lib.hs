@@ -118,7 +118,7 @@ invertHuman (Node l@(Node _ _) r@(Node _ _)) =
 invertHuman t = t
 
 
--- With one extra bit of state, we can adapt one of o1's implementations (`invertO1`)
+-- With one extra bit of state, we can adapt one of o1-preview's implementations (`invertO1`): https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76
 -- to create a working solution (`invertHumanBasedOnO1`) (that passes all the tests)
 invertO1 :: Tree a -> Tree a
 invertO1 (Leaf x) = Leaf x
@@ -173,19 +173,6 @@ invertO1MiniWithHelperFns tree = rebuildTree d permutedLeaves
     d = depth tree
     leaves = collectLeaves tree
     permutedLeaves = permuteLeaves d leaves
-
--- -- o1's implementation
--- invert :: Tree a -> Tree a
--- invert = invert False
---   where
---     -- Helper function using one bit of state to track inversion
---     invert :: Bool -> Tree a -> Tree a
---     invert b (Leaf x) = Leaf x
---     invert b (Node l r) =
---         case (invert b l, invert b r) of
---             (Leaf x', Leaf y') -> Node (Leaf x') (Leaf y')
---             (Node a b', Node c d) -> Node (Node a c) (Node b' d)
---             _ -> Node l r
 
 -- Placeholder for the invert function
 invert :: Tree a -> Tree a
