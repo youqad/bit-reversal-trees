@@ -10,7 +10,9 @@ Victor's challenge involves coming up with a prompt to show that a LLM is capabl
 3. The function may use one extra bit of state if needed, i.e. it must have the type signature `Tree -> Tree` or `Bool -> Tree -> Tree` (direct recursion with maximum 1 bit of state)
 
 <p align="center">
-  <img src="victor_tweet.png" alt="Victor's tweet" width="600" height="auto">
+  <a href="https://x.com/VictorTaelin/status/1844886809005687270">
+    <img src="victor_tweet.png" alt="Victor's tweet" width="400" height="auto">
+  </a>
 </p>
 
 My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa) and kept under 1k tokens, is in [`haskell_prompt.md`](haskell_prompt.md).
