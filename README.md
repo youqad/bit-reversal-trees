@@ -50,7 +50,7 @@ My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/Victor
 
 where:
 
-- `src/Lib.hs`: Contains Haskell implementations of the bit-reversal tree inversion (see `haskell_prompt.md` for the prompt used to generate the AI ones)
+- `src/Lib.hs`: Contains Haskell implementations of the bit-reversal tree inversion (see [`haskell_prompt.md`](haskell_prompt.md) for the prompt used to generate the AI ones)
 - `test/Spec.hs`: QuickCheck tests for the Haskell implementations in `src/Lib.hs`
 - `test/DynamicSpec.hs`: QuickCheck tests for the Haskell implementations generated during the LLM search
 - `python/solve_challenge.py`: Python script to search for valid Haskell solutions using LLMs
@@ -134,7 +134,7 @@ The `src/Lib.hs` file contains several Haskell implementations of the bit-revers
 
 The `python/solve_challenge.py` script uses OpenAI's GPT models to search for valid Haskell implementations of the bit-reversal tree inversion function. It follows these steps:
 
-1. Generate initial solutions to the prompt `haskell_prompt.md` using the generator LLM (`GENERATOR_MODEL_NAME` in `.env`)
+1. Generate initial solutions to the prompt [`haskell_prompt.md`](haskell_prompt.md) using the generator LLM (`GENERATOR_MODEL_NAME` in `.env`)
 
 2. For each one of them, verify the syntactic correctness using the verifier LLM (`VERIFIER_MODEL_NAME` in `.env`)
 3. For the syntactically correct ones, run the suggested solutions through the Haskell QuickCheck tests in `test/DynamicSpec.hs`
