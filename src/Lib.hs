@@ -137,6 +137,43 @@ invertHumanBasedOnO1 = invert' False
     invert' True (Node (Node a b) (Node c d)) = Node (invert' True $ Node a c) (invert' True $ Node b d)
 
 
+-- o1-mini implementation, which passes all tests 
+-- BUT does not satisfy the syntactic requirement "no helper functions"
+invertO1MiniWithHelperFns :: Tree a -> Tree a
+invertO1MiniWithHelperFns tree = rebuildTree d permutedLeaves
+  where
+    -- Calculate the depth of the tree
+    depth :: Tree a -> Int
+    depth (Leaf _) = 0
+    depth (Node l _) = 1 + depth l
+
+    -- Collect all leaves in left-to-right order
+    collectLeaves :: Tree a -> [a]
+    collectLeaves (Leaf x) = [x]
+    collectLeaves (Node l r) = collectLeaves l ++ collectLeaves r
+
+    -- Compute bit-reversed index
+    bitReversedIndex :: Int -> Int -> Int
+    bitReversedIndex bits x = foldl (\acc i -> acc * 2 + ((x `div` (2 ^ i)) `mod` 2)) 0 [0..bits -1]
+
+    -- Permute leaves based on bit-reversed indices
+    permuteLeaves :: Int -> [a] -> [a]
+    permuteLeaves bits leaves = map (\i -> leaves !! bitReversedIndex bits i) [0..length leaves - 1]
+
+    -- Rebuild the tree from a list of leaves
+    rebuildTree :: Int -> [a] -> Tree a
+    rebuildTree 0 (x:_) = Leaf x
+    rebuildTree d xs = Node (rebuildTree (d -1) left) (rebuildTree (d -1) right)
+      where
+        half = length xs `div` 2
+        left = take half xs
+        right = drop half xs
+
+    -- Execute steps within invert
+    d = depth tree
+    leaves = collectLeaves tree
+    permutedLeaves = permuteLeaves d leaves
+
 -- -- o1's implementation
 -- invert :: Tree a -> Tree a
 -- invert = invert False
@@ -152,4 +189,4 @@ invertHumanBasedOnO1 = invert' False
 
 -- Placeholder for the invert function
 invert :: Tree a -> Tree a
-invert = invertHumanBasedOnO1
+invert = invertO1MiniWithHelperFns
