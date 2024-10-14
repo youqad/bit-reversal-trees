@@ -1,5 +1,11 @@
 # Victor Taelin's Bit-Reversal Trees Challenge: Haskell Solutions and Python LLM Search
 
+[![Haskell](https://img.shields.io/badge/Haskell-5e5086?style=flat-square&logo=haskell&logoColor=white)](https://www.haskell.org/ghcup/)
+[![Python](https://img.shields.io/badge/python-3670A0?style=flat-square&logo=python&logoColor=ffdd54)](https://www.python.org/downloads/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-74aa9c?style=flat-square&logo=openai&logoColor=white)](https://platform.openai.com/docs/api-reference)
+[![W&B](https://img.shields.io/badge/W%26B-000000?style=flat-square&logo=weightsandbiases&logoColor=white)](https://wandb.ai/site)
+[![X](https://img.shields.io/badge/Post-%23000000.svg?style=flat-square&logo=X&logoColor=white)](https://x.com/VictorTaelin/status/1844886809005687270)
+
 This project implements and tests solutions to the bit-reversal permutation on binary trees, as proposed in [Victor Taelin's challenge](https://x.com/VictorTaelin/status/1844886809005687270). It includes Haskell implementations and a Python-based Large Language Model (LLM) search for valid Haskell solutions.
 
 ## The Challenge
