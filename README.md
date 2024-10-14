@@ -11,7 +11,7 @@ Victor's challenge involves coming up with a prompt to show that a LLM is capabl
 
 <p align="center">
   <a href="https://x.com/VictorTaelin/status/1844886809005687270">
-    <img src="victor_tweet.png" alt="Victor's tweet" width="400" height="auto">
+    <img src="victor_tweet.png" alt="Victor's tweet" width="500" height="auto">
   </a>
 </p>
 
