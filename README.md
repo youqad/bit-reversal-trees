@@ -17,7 +17,7 @@ Victor's challenge involves coming up with a prompt to show that a LLM is capabl
 
 My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa) and kept under 1k tokens, is in [`haskell_prompt.md`](haskell_prompt.md).
 
-> [!TIP] References
+> [!NOTE]
 > For full details about the challenge, see: 
 > - [Victor's tweet](https://x.com/VictorTaelin/status/1844886809005687270)
 > - [Victor's gist](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa)
