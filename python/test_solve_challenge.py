@@ -20,7 +20,7 @@ invert (Node l r) = Node (invert r) (invert l)
     print(f"Result: {result}")
     print(f"Output: {output}")
     assert result == False
-    assert "Failures:" in output or "error:" in output
+    assert "Failed:" in output or "error:" in output
 
 def test_run_tests_correct_implementation(ghci_process):
     correct_invert_code = """
