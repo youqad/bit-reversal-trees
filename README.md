@@ -125,10 +125,10 @@ where:
 
 The [`src/Lib.hs`](src/Lib.hs) file contains several Haskell implementations of the bit-reversal tree inversion function, including:
 
-- `invertHuman`: My own reference implementation, written by hand, which satisfies all the constraints
-- `invertO1`: [One of o1-preview's solutions](https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76), which passes all the tests but does not satisfy the constraint of not using any helper function
-- `invertHumanBasedOnO1`: An adaptation of o1-preview's implementation by hand to satisfy the constraint of not using any helper function
-- `invertO1MiniWithHelperFns`: [One of o1-mini's solutions](https://gist.github.com/youqad/e8870ec417dd37606d06a47412ce5e3b#file-o1-mini-01928789-1b47-74a3-8a72-0cda64404bae-json-L51), which passes all the tests but does not satisfy the constraint of not using any helper function
+- [`invertHuman`](https://github.com/youqad/bit-reversal-trees/blob/d68d88f950362b59a99927cd572b943ade2b5cd0/src/Lib.hs#L111-L118): My own reference implementation, written by hand, which satisfies all the constraints
+- [`invertO1`](https://github.com/youqad/bit-reversal-trees/blob/d68d88f950362b59a99927cd572b943ade2b5cd0/src/Lib.hs#L121-L128): [One of o1-preview's solutions](https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76), which passes all the tests but does not satisfy the constraint of not using any helper function
+- [`invertHumanBasedOnO1`](https://github.com/youqad/bit-reversal-trees/blob/d68d88f950362b59a99927cd572b943ade2b5cd0/src/Lib.hs#L130-L137): An adaptation of o1-preview's implementation by hand to satisfy the constraint of not using any helper function
+- [`invertO1MiniWithHelperFns`](https://github.com/youqad/bit-reversal-trees/blob/d68d88f950362b59a99927cd572b943ade2b5cd0/src/Lib.hs#L140-L175): [One of o1-mini's solutions](https://gist.github.com/youqad/e8870ec417dd37606d06a47412ce5e3b#file-o1-mini-01928789-1b47-74a3-8a72-0cda64404bae-json-L51), which passes all the tests but does not satisfy the constraint of not using any helper function
 
 ## Python LLM Search
 
