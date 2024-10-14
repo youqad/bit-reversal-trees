@@ -138,10 +138,10 @@ invertHumanBasedOnO1 = invert' False
     invert' True (Node (Node a b) (Node c d)) = Node (invert' True $ Node a c) (invert' True $ Node b d)
 
 
--- o1-mini implementation, which passes all tests 
--- BUT does not satisfy the syntactic requirement "no helper functions"
-invertO1MiniWithHelperFns :: Tree a -> Tree a
-invertO1MiniWithHelperFns tree = rebuildTree d permutedLeaves
+-- Several o1-mini implementations, which pass all tests 
+-- BUT do not satisfy the syntactic requirement "no helper functions"
+invertO1MiniWithHelperFns1 :: Tree a -> Tree a
+invertO1MiniWithHelperFns1 tree = rebuildTree d permutedLeaves
   where
     -- Calculate the depth of the tree
     depth :: Tree a -> Int
@@ -175,6 +175,60 @@ invertO1MiniWithHelperFns tree = rebuildTree d permutedLeaves
     leaves = collectLeaves tree
     permutedLeaves = permuteLeaves d leaves
 
+invertO1MiniWithHelperFns2 :: Tree a -> Tree a
+invertO1MiniWithHelperFns2 tree = buildTree (bitReverseList (flatten tree))
+  where
+    flatten :: Tree a -> [a]
+    flatten (Leaf x) = [x]
+    flatten (Node l r) = flatten l ++ flatten r
+
+    bitReverseList :: [a] -> [a]
+    bitReverseList xs = [ xs !! bitReverse i k | i <- [0..n-1] ]
+      where
+        len = length xs
+        n = len
+        k = floor (logBase 2 (fromIntegral len)) :: Int
+
+        bitReverse :: Int -> Int -> Int
+        bitReverse i bits = helper i bits 0
+          where
+            helper :: Int -> Int -> Int -> Int
+            helper 0 0 acc = acc
+            helper x b acc
+              | b <= 0 = acc
+              | otherwise = helper (x `div` 2) (b - 1) (acc * 2 + (x `mod` 2))
+
+    buildTree :: [a] -> Tree a
+    buildTree [x] = Leaf x
+    buildTree xs =
+      let half = length xs `div` 2
+          left = take half xs
+          right = drop half xs
+      in Node (buildTree left) (buildTree right)
+
+invertO1MiniWithHelperFns3 :: Tree a -> Tree a
+invertO1MiniWithHelperFns3 tree = buildTree (map reverseBits (collectLeaves tree []))
+  where
+    collectLeaves :: Tree a -> [Bool] -> [([Bool], a)]
+    collectLeaves (Leaf x) path = [(path, x)]
+    collectLeaves (Node l r) path = collectLeaves l (path ++ [False]) ++ collectLeaves r (path ++ [True])
+
+    reverseBits :: ([Bool], a) -> ([Bool], a)
+    reverseBits (bits, x) = (reverse bits, x)
+
+    buildTree :: [([Bool], a)] -> Tree a
+    buildTree leaves = build leaves
+      where
+        build [] = error "No leaves to build the tree."
+        build [([], x)] = Leaf x
+        build xs =
+          let leftLeaves  = [ (bits, x) | (False : bits, x) <- xs ]
+              rightLeaves = [ (bits, x) | (True : bits, x) <- xs ]
+              leftSubtree  = build leftLeaves
+              rightSubtree = build rightLeaves
+          in Node leftSubtree rightSubtree
+
+
 -- Placeholder for the invert function
 invert :: Tree a -> Tree a
-invert = invertO1MiniWithHelperFns
+invert = invertO1MiniWithHelperFns3
