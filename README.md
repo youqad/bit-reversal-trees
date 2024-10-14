@@ -100,7 +100,7 @@ where:
 
 5. Set up your environment variables:
    Copy the [`.env.example`](.env.example) file to `.env` and fill in the required values:
-   ```
+   ```sh
    OPENAI_API_KEY=your_api_key_here
    OPENAI_ORGANIZATION=your_organization_id
    OPENAI_PROJECT=your_project_name
