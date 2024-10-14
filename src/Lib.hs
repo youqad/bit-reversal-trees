@@ -118,15 +118,16 @@ invertHuman (Node l@(Node _ _) r@(Node _ _)) =
 invertHuman t = t
 
 
--- With one extra bit of state, we can adapt one of o1-preview's implementations (`invertO1`): https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76
--- to create a working solution (`invertHumanBasedOnO1`) (that passes all the tests)
+-- We can adapt an o1-preview implementation which passes all tests 
+-- (from https://chatgpt.com/share/670c8a2e-38b8-800a-9d8b-9594b5cf0c76) 
 invertO1 :: Tree a -> Tree a
 invertO1 (Leaf x) = Leaf x
 invertO1 (Node l r) = merge (invertO1 l) (invertO1 r)
   where
     merge (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
     merge (Node a b) (Node c d) = Node (merge a c) (merge b d)
-  
+
+-- to create a solution that satisfies the constraint of only using one extra bit of state
 invertHumanBasedOnO1 :: Tree a -> Tree a
 invertHumanBasedOnO1 = invert' False
   where
