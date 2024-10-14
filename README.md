@@ -1,65 +1,147 @@
-# Victor Taelin's challenge: Bit-Reversal Trees
+# Victor Taelin's Bit-Reversal Trees Challenge: Haskell Solutions and Python LLM Search
 
-This project implements and tests the bit reversal permutation on binary trees, as proposed in [Victor Taelin's challenge](https://x.com/VictorTaelin/status/1844886809005687270).
+This project implements and tests solutions to the bit-reversal permutation on binary trees, as proposed in [Victor Taelin's challenge](https://x.com/VictorTaelin/status/1844886809005687270). It includes Haskell implementations and a Python-based Large Language Model (LLM) search for valid Haskell solutions.
 
 ## The Challenge
 
 Victor's challenge involves coming up with a prompt to show that a LLM is capable of implementing a solution to the problem of inverting a binary tree with specific requirements:
 1. It must invert the keys using a "bit-reversal permutation"
 2. It must be a dependency-free, pure recursive function
-3. The function must have the type signature `Bit -> Tree -> Tree` (direct recursion with max 1 bit state)
+3. The function may use one extra bit of state if needed, i.e. it must have the type signature `Tree -> Tree` or `Bool -> Tree -> Tree` (direct recursion with maximum 1 bit of state)
 
-My Haskell prompt is in [`haskell_prompt.md`](haskell_prompt.md).
+<p align="center">
+  <img src="victor_tweet.png" alt="Victor's tweet" width="600" height="auto">
+</p>
 
-For full details of the challenge, see: 
-- [Victor's tweet](https://x.com/VictorTaelin/status/1844886809005687270)
-- [Victor's gist](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa)
+My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa) and kept under 1k tokens, is in [`haskell_prompt.md`](haskell_prompt.md).
+
+> [!TIP] References
+> For full details about the challenge, see: 
+> - [Victor's tweet](https://x.com/VictorTaelin/status/1844886809005687270)
+> - [Victor's gist](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa)
+
+## Project Structure
+
+```
+.
+├── .env.example
+├── README.md
+├── Victor_challenge.md
+├── haskell_prompt.md
+├── python
+│   ├── requirements.txt
+│   ├── solutions0.txt
+│   ├── solve_challenge.py
+│   ├── test_solve_challenge.py
+│   └── utils.py
+├── Setup.hs
+├── package.yaml
+├── stack.yaml
+├── app
+│   └── Main.hs
+├── src
+│   └── Lib.hs
+└── test
+    ├── DynamicSpec.hs
+    └── Spec.hs
+```
+
+where:
+
+- `src/Lib.hs`: Contains Haskell implementations of the bit-reversal tree inversion (see `haskell_prompt.md` for the prompt used to generate the AI ones)
+- `test/Spec.hs`: QuickCheck tests for the Haskell implementations in `src/Lib.hs`
+- `test/DynamicSpec.hs`: QuickCheck tests for the Haskell implementations generated during the LLM search
+- `python/solve_challenge.py`: Python script to search for valid Haskell solutions using LLMs
+- `python/utils.py`: Utility functions for the Python LLM search
+- `python/test_solve_challenge.py`: Pytest file for testing the Python-GHCi integration for the LLM search
 
 ## Getting Started
 
 ### Prerequisites
 
+1. Haskell with Stack
+2. Python 3.7+
+3. OpenAI API key (for LLM search)
+4. Weights & Biases API key (optional, for LLM logging)
+
+### Step-by-Step Guide
+
 #### Haskell
 
-Make sure you have [Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/) installed on your system.
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/youqad/bit-reversal-trees.git
+   cd bit-reversal-trees
+   ```
+
+2. Set up the Haskell environment:
+   Make sure you have [Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/) installed on your system.
+   ```sh
+   stack setup
+   stack build
+   ```
+
+3. To run the Haskell QuickCheck tests:
+   ```sh
+   stack test
+   ```
+
 
 #### Python
+4. Set up the Python environment:
+   ```sh
+   cd python
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-```sh
-cd python
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+5. Set up your environment variables:
+   Copy the `.env.example` file to `.env` and fill in the required values:
+   ```
+   OPENAI_API_KEY=your_api_key_here
+   OPENAI_ORGANIZATION=your_organization_id
+   OPENAI_PROJECT=your_project_name
+   WANDB_API_KEY=your_wandb_api_key
+   GENERATOR_MODEL_NAME=gpt-4o
+   VERIFIER_MODEL_NAME=gpt-4o-mini
+   MAX_ROUNDS=8 # Number of rounds/turns per conversation, in the LLM search
+   NUM_INITIAL_SOLUTIONS=10 # Number of initial solutions to the prompt to generate (each of them give rise to a conversation)
+   ```
 
-### Building the Project
+6. Run the Python LLM search:
+   ```sh
+   python solve_challenge.py
+   ```
 
-To build the project, run:
+7. To run the Python tests:
+   ```sh
+   python -m pytest test_solve_challenge.py
+   ```
 
-```bash
-stack build
-```
+## Haskell Implementations
 
-To run the tests, run:
+The `src/Lib.hs` file contains several Haskell implementations of the bit-reversal tree inversion function, including:
 
-```bash
-stack test
-```
+- `invertHuman`: My reference implementation, written by hand
+- `invertO1`: One of o1-preview's solutions, which passes all the tests but does not satisfy the constraint of not using any helper function
+- `invertHumanBasedOnO1`: An adaptation of o1-preview's implementation by hand to satisfy the constraint of not using any helper function
+- `invertO1MiniWithHelperFns`: One of o1-preview's solutions, which passes all the tests but does not satisfy the constraint of not using any helper function
 
-To run the Python search, run:
+## Python LLM Search
 
-```bash
-cd python
-python solve_challenge.py
-```
+The `python/solve_challenge.py` script uses OpenAI's GPT models to search for valid Haskell implementations of the bit-reversal tree inversion function. It follows these steps:
 
-To run the Python tests, run:
+1. Generate initial solutions to the prompt `haskell_prompt.md` using the generator LLM (`GENERATOR_MODEL_NAME` in `.env`)
 
-```bash
-cd python
-python -m pytest test_solve_challenge.py
-```
+2. For each one of them, verify the syntactic correctness using the verifier LLM (`VERIFIER_MODEL_NAME` in `.env`)
+3. For the syntactically correct ones, run the suggested solutions through the Haskell QuickCheck tests in `test/DynamicSpec.hs`
+
+4. Rinse and repeat: iterate and the refine solutions based on the test results
+
+
+
 
 ## License
 
-The code in this repo is open source and available under the [MIT License](LICENSE).
+This project is open source and available under the [MIT License](LICENSE).
