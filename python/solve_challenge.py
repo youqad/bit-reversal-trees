@@ -25,7 +25,7 @@ weave.init('bit-reversal-trees')
 verifier_function_schemas = [
     {
         "name": "extract_invert_function",
-        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements. Return the code of the function and a boolean indicating if it satisfies the syntactic requirements.",
+        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -35,7 +35,7 @@ verifier_function_schemas = [
                 },
                 "satisfies_requirements": {
                     "type": "boolean",
-                    "description": "Whether the proposed `invert` function satisfies the syntactic requirements, i.e.:\n1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function, except for the following: the ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function like `invert' :: Bool -> Tree a -> Tree a`).\n2. It only uses recursion (no loops).\n3. It maintains purity (no side effects or mutability).",
+                    "description": "Whether the proposed `invert` function satisfies the syntactic requirements, i.e.:\n1. The `invert` function must be a standalone, pure, and recursive function. It can use a single helper inner function of type `Bool -> Tree a -> Tree a` if needed (i.e. `invert` can rely on a helper function like `invert' :: Bool -> Tree a -> Tree a`, for example).\n2. The `invert` function only uses recursion (no loops).\n3. The `invert` function maintains purity (no side effects or mutability).",
                 },
             },
             "required": ["invert_function_code", "satisfies_requirements"],
@@ -130,6 +130,27 @@ def extract_failed_info(output):
         return failed_info.replace("Inverted flattened:", "Your inverted flattened:")
     else:
         return "Failed to extract detailed failure information."
+
+def get_call_dict(call):
+    call_dict = {
+        "id": getattr(call, 'id', None),
+        "project_id": getattr(call, 'project_id', None),
+        "op_name": getattr(call, 'op_name', None),
+        "display_name": getattr(call, 'display_name', None),
+        "trace_id": getattr(call, 'trace_id', None),
+        "parent_id": getattr(call, 'parent_id', None),
+        "started_at": getattr(call, 'started_at', None),
+        "attributes": getattr(call, 'attributes', {}),
+        "inputs": getattr(call, 'inputs', {}),
+        "ended_at": getattr(call, 'ended_at', None),
+        "exception": getattr(call, 'exception', None),
+        "output": getattr(call, 'output', None),
+        "summary": getattr(call, 'summary', None),
+        "wb_user_id": getattr(call, 'wb_user_id', None),
+        "wb_run_id": getattr(call, 'wb_run_id', None),
+        "deleted_at": getattr(call, 'deleted_at', None)
+    }
+    return call_dict
 
 def main():
     with open(HASKELL_PROMPT_FILE, "r") as f:
@@ -292,7 +313,7 @@ def process_conversation(conversation, ghci):
 def write_solution(solution, call_ids_dict, call):
     """
     Write a solution to the 'solutions.txt' file along with the Call ID, Trace ID, and Parent ID.
-    Also log the call.dict() to 'solutions_calls.jsonl'.
+    Also log the call to 'solutions_calls.jsonl'.
     """
     with open("solutions.txt", "a+") as f:
         f.write(f"Call ID: {call_ids_dict['call_id']}\n")
@@ -300,8 +321,7 @@ def write_solution(solution, call_ids_dict, call):
         f.write(f"Parent ID: {call_ids_dict['parent_id']}\n")
         f.write(solution + "\n\n")
     print(colored(f"Solution has been saved to 'solutions.txt' with Call ID: {call_ids_dict['call_id']} 🚀", "light_green"))
-    
-    call_dict = call.dict()
+    call_dict = get_call_dict(call)
     call_dict['solution'] = solution
     with open("solutions_calls.jsonl", "a+") as f:
         json.dump(call_dict, f)
@@ -356,12 +376,13 @@ def verify_response(assistant_content, ghci, call_ids_dict, call):
                 print(colored(invert_code, "yellow"))
                 success = True
                 feedback = invert_code
+                call_dict = get_call_dict(call)
                 weave.publish({
                     'call_id': call_ids_dict['call_id'],
                     'trace_id': call_ids_dict['trace_id'],
                     'parent_id': call_ids_dict['parent_id'],
                     'solution': feedback,
-                    'call': call.dict(),
+                    'call': call_dict,
                     'success': True
                 }, call_ids_dict['call_id'])
             else:
