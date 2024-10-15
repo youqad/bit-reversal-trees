@@ -23,6 +23,28 @@ load_dotenv(find_dotenv())
 
 weave.init('bit-reversal-trees')
 
+# Define function schemas for LiteLLM
+verifier_function_schemas = [
+    {
+        "name": "extract_invert_function",
+        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "invert_function_code": {
+                    "type": "string",
+                    "description": "The Haskell code for the `invert :: Tree a -> Tree a` function, and ONLY this function.",
+                },
+                "satisfies_requirements": {
+                    "type": "boolean",
+                    "description": "Whether the proposed `invert` function satisfies the syntactic requirements, i.e.:\n1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function, except for the following: the ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function like `invert' :: Bool -> Tree a -> Tree a`).\n2. It only uses recursion (no loops).\n3. It maintains purity (no side effects or mutability).",
+                },
+            },
+            "required": ["invert_function_code", "satisfies_requirements"],
+        },
+    },
+]
+
 def create_ghci_process():
     print("Starting GHCi process...")
     # Set logfile to sys.stdout to print GHCi output to the console
@@ -124,8 +146,8 @@ def main():
 
     conversations = []
 
-    if GENERATOR_MODEL_NAME.startswith("o1"):
-        # For o1 models, make separate requests (n>1 is not supported)
+    if GENERATOR_MODEL_NAME.startswith("o1") or GENERATOR_MODEL_NAME.startswith("claude"):
+        # For o1 models and Claude, make separate requests (n>1 is not supported)
         for idx in range(NUM_INITIAL_SOLUTIONS):
             response = chat_completion_request(
                 [initial_message],
@@ -248,28 +270,6 @@ def write_solution(solution):
         f.write(solution + "\n\n")
     print(colored("Solution has been saved to 'solutions.txt' 🚀", "light_green"))
 
-verifier_function_calling_list = [
-    {
-        "name": "extract_invert_function",
-        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "invert_function_code": {
-                    "type": "string",
-                    "description": "The Haskell code for the `invert :: Tree a -> Tree a` function, and ONLY this function.",
-                },
-                "satisfies_requirements": {
-                    "type": "boolean",
-                    "description": "Whether the proposed invert function satisfies the syntactic requirements, i.e.:\n1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function. The ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function `invert' :: Bool -> Tree a -> Tree a`).\n2. It only uses recursion (no loops).\n3. It maintains purity (no side effects or mutability).",
-                },
-            },
-            "required": ["invert_function_code", "satisfies_requirements"],
-        },
-    },
-]
-verifier_function_calling_schema = {"name": "extract_invert_function"}
-
 def verify_response(assistant_content, ghci):
     success = False
     feedback = None
@@ -288,8 +288,8 @@ def verify_response(assistant_content, ghci):
     response_verifier = chat_completion_request(
         verifier_messages,
         model=VERIFIER_MODEL_NAME,
-        functions=verifier_function_calling_list,
-        function_call=verifier_function_calling_schema
+        functions=verifier_function_schemas,  # Passed the defined function schemas
+        function_call={"name": "extract_invert_function"}  # Specified which function to call
     )
 
     assistant_verifier_message = response_verifier.choices[0].message

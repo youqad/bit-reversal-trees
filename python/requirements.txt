@@ -1,3 +1,4 @@
+anthropic
 openai
 tenacity
 termcolor
@@ -6,3 +7,4 @@ weave
 pexpect
 tqdm
 pytest
+litellm

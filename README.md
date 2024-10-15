@@ -71,8 +71,9 @@ where:
 
 1. Haskell with Stack
 2. Python 3.7+
-3. OpenAI API key (for LLM search)
-4. Weights & Biases API key (optional, for LLM logging)
+3. OpenAI API key (for GPT models)
+4. Anthropic API key (for Claude models)
+5. Weights & Biases API key (optional, for LLM logging)
 
 ### Step-by-Step Guide
 
@@ -112,9 +113,10 @@ where:
    OPENAI_API_KEY=your_api_key_here
    OPENAI_ORGANIZATION=your_organization_id
    OPENAI_PROJECT=your_project_name
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here
    WANDB_API_KEY=your_wandb_api_key
-   GENERATOR_MODEL_NAME=gpt-4o
-   VERIFIER_MODEL_NAME=gpt-4o-mini
+   GENERATOR_MODEL_NAME=claude-3-sonnet-20240229 # or gpt-4o, or o1-mini, or o1-preview
+   VERIFIER_MODEL_NAME=gpt-4o-mini # for example
    NUM_INITIAL_SOLUTIONS=10 # Number of suggested solutions to the initial prompt (each of them giving rise to a conversation)
    MAX_ROUNDS=8 # Number of rounds/turns per conversation, in the LLM search
    ```
