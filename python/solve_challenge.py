@@ -242,7 +242,7 @@ def process_conversation(conversation, ghci):
 
     first_assistant_message = messages[-1]
     call_ids_dict = conversation["call_ids_dict"]
-    feedback, success = verify_response(first_assistant_message["content"], ghci, call_ids_dict)
+    feedback, success = verify_response(first_assistant_message["content"], ghci, call_ids_dict, conversation["call"])
     if success:
         write_solution(feedback, call_ids_dict, conversation["call"])
         return feedback, success
@@ -273,7 +273,7 @@ def process_conversation(conversation, ghci):
         }
         conversation["call_ids_dict"] = call_ids_dict
 
-        feedback, success = verify_response(assistant_content, ghci, call_ids_dict)
+        feedback, success = verify_response(assistant_content, ghci, call_ids_dict, call)
 
         if success:
             write_solution(feedback, call_ids_dict, call)
