@@ -168,7 +168,8 @@ def main():
                 "messages": messages,
                 "round_num": 1,
                 "idx": idx + 1,
-                "call_ids_dict": call_ids_dict
+                "call_ids_dict": call_ids_dict,
+                "call": call
             })
     else:
         response, call = chat_completion_request.call(
@@ -192,7 +193,8 @@ def main():
                 "messages": messages,
                 "round_num": 1,
                 "idx": idx + 1,
-                "call_ids_dict": call_ids_dict
+                "call_ids_dict": call_ids_dict,
+                "call": call
             })
 
     ghci = create_ghci_process()
@@ -243,7 +245,7 @@ def process_conversation(conversation, ghci):
     call_ids_dict = conversation["call_ids_dict"]
     feedback, success = verify_response(first_assistant_message["content"], ghci, call_ids_dict)
     if success:
-        write_solution(feedback, call_ids_dict)
+        write_solution(feedback, call_ids_dict, conversation["call"])
         return feedback, success
     messages.append({"role": "user", "content": feedback})
 
@@ -263,7 +265,8 @@ def process_conversation(conversation, ghci):
         assistant_content = assistant_message.content
         messages.append({"role": "assistant", "content": assistant_content})
         conversation["messages"] = messages
-        
+        conversation["call"] = call
+
         call_ids_dict = {
             "call_id": call.id,
             "trace_id": call.trace_id,
@@ -274,7 +277,7 @@ def process_conversation(conversation, ghci):
         feedback, success = verify_response(assistant_content, ghci, call_ids_dict)
 
         if success:
-            write_solution(feedback, call_ids_dict)
+            write_solution(feedback, call_ids_dict, call)
             return feedback, success
 
         messages.append({"role": "user", "content": feedback})
@@ -287,9 +290,10 @@ def process_conversation(conversation, ghci):
 
     return conversation, False
 
-def write_solution(solution, call_ids_dict):
+def write_solution(solution, call_ids_dict, call):
     """
     Write a solution to the 'solutions.txt' file along with the Call ID, Trace ID, and Parent ID.
+    Also log the call.dict() to 'solutions_calls.jsonl'.
     """
     with open("solutions.txt", "a+") as f:
         f.write(f"Call ID: {call_ids_dict['call_id']}\n")
@@ -297,15 +301,15 @@ def write_solution(solution, call_ids_dict):
         f.write(f"Parent ID: {call_ids_dict['parent_id']}\n")
         f.write(solution + "\n\n")
     print(colored(f"Solution has been saved to 'solutions.txt' with Call ID: {call_ids_dict['call_id']} 🚀", "light_green"))
-    weave.save({
-        'call_id': call_ids_dict['call_id'],
-        'trace_id': call_ids_dict['trace_id'],
-        'parent_id': call_ids_dict['parent_id'],
-        'solution': solution,
-        'success': True
-    })
+    
+    call_dict = call.dict()
+    call_dict['solution'] = solution
+    with open("solutions_calls.jsonl", "a+") as f:
+        json.dump(call_dict, f)
+        f.write("\n")
+    print(colored(f"Call details logged to 'solutions_calls.jsonl' for Call ID: {call_ids_dict['call_id']} 📝", "light_green"))
 
-def verify_response(assistant_content, ghci, call_ids_dict):
+def verify_response(assistant_content, ghci, call_ids_dict, call):
     success = False
     feedback = None
 
@@ -320,7 +324,7 @@ def verify_response(assistant_content, ghci, call_ids_dict):
         },
     ]
 
-    response_verifier, call = chat_completion_request.call(
+    response_verifier = chat_completion_request(
         verifier_messages,
         model=VERIFIER_MODEL_NAME,
         functions=verifier_function_schemas,
@@ -358,6 +362,7 @@ def verify_response(assistant_content, ghci, call_ids_dict):
                     'trace_id': call_ids_dict['trace_id'],
                     'parent_id': call_ids_dict['parent_id'],
                     'solution': feedback,
+                    'call': call.dict(),
                     'success': True
                 }, call_ids_dict['call_id'])
             else:
