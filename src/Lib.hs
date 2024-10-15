@@ -229,6 +229,17 @@ invertO1MiniWithHelperFns3 tree = buildTree (map reverseBits (collectLeaves tree
           in Node leftSubtree rightSubtree
 
 
+-- Claude's implementation, which passes all tests
+-- BUT does not satisfy the syntactic constraint "no helper functions"
+invertClaude :: Tree a -> Tree a
+invertClaude (Leaf x) = Leaf x
+invertClaude (Node l r) = combine (invertClaude l) (invertClaude r)
+  where
+    combine (Leaf a) (Leaf b) = Node (Leaf a) (Leaf b)
+    combine (Leaf a) (Node c d) = Node (combine (Leaf a) c) d
+    combine (Node a b) (Leaf d) = Node a (combine b (Leaf d))
+    combine (Node a b) (Node c d) = Node (combine a c) (combine b d)
+
 -- Placeholder for the invert function
 invert :: Tree a -> Tree a
 invert = invertO1MiniWithHelperFns3
