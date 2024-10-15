@@ -1,7 +1,6 @@
 import os
 import json
 import subprocess
-import concurrent.futures
 import copy
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -149,7 +148,7 @@ def main():
     if GENERATOR_MODEL_NAME.startswith("o1") or GENERATOR_MODEL_NAME.startswith("claude"):
         # For o1 models and Claude, make separate requests (n>1 is not supported)
         for idx in range(NUM_INITIAL_SOLUTIONS):
-            response = chat_completion_request(
+            response, call = chat_completion_request.call(
                 [initial_message],
                 model=GENERATOR_MODEL_NAME,
                 n=1,
@@ -160,14 +159,19 @@ def main():
                 "role": "assistant",
                 "content": assistant_content,
             }]
+            call_ids_dict = {
+                "call_id": call.id,
+                "trace_id": call.trace_id,
+                "parent_id": call.parent_id
+            }
             conversations.append({
                 "messages": messages,
                 "round_num": 1,
-                "idx": idx + 1
+                "idx": idx + 1,
+                "call_ids_dict": call_ids_dict
             })
     else:
-        # For other models, use a single request with n>1
-        response = chat_completion_request(
+        response, call = chat_completion_request.call(
             [initial_message],
             model=GENERATOR_MODEL_NAME,
             n=NUM_INITIAL_SOLUTIONS,
@@ -179,10 +183,16 @@ def main():
                 "role": "assistant",
                 "content": assistant_content,
             }]
+            call_ids_dict = {
+                "call_id": call.id,
+                "trace_id": call.trace_id,
+                "parent_id": call.parent_id
+            }
             conversations.append({
                 "messages": messages,
                 "round_num": 1,
-                "idx": idx + 1
+                "idx": idx + 1,
+                "call_ids_dict": call_ids_dict
             })
 
     ghci = create_ghci_process()
@@ -194,15 +204,18 @@ def main():
             if success:
                 print(colored(f"✨ Conversation {conv['idx']}: Found a valid implementation! 🎉 ✨", "green"))
                 print(colored(full_conv_or_solution, "light_green"))
-                solutions.append(full_conv_or_solution)
+                solutions.append((full_conv_or_solution, conv['call_id'], conv['trace_id'], conv['parent_id']))
             pbar.update(1)
 
     print(colored(f"Found {len(solutions)} solutions!", "green"))
     if solutions:
         with open("solutions_final.txt", "a+") as f:
-            for solution in solutions:
+            for solution, call_id, trace_id, parent_id in solutions:
+                f.write(f"Call ID: {call_id}\n")
+                f.write(f"Trace ID: {trace_id}\n")
+                f.write(f"Parent ID: {parent_id}\n")
                 f.write(solution + "\n\n")
-        print(colored("Solutions have been saved to 'solutions.txt' 🚀", "light_green"))
+        print(colored("Solutions have been saved to 'solutions_final.txt' 🚀", "light_green"))
     else:
         print(colored("No solution found. ❌", "magenta"))
     
@@ -227,9 +240,10 @@ def process_conversation(conversation, ghci):
     messages = conversation["messages"]
 
     first_assistant_message = messages[-1]
-    feedback, success = verify_response(first_assistant_message["content"], ghci)
+    call_ids_dict = conversation["call_ids_dict"]
+    feedback, success = verify_response(first_assistant_message["content"], ghci, call_ids_dict)
     if success:
-        write_solution(feedback)
+        write_solution(feedback, call_ids_dict)
         return feedback, success
     messages.append({"role": "user", "content": feedback})
 
@@ -240,16 +254,27 @@ def process_conversation(conversation, ghci):
     while conversation["round_num"] <= MAX_ROUNDS:
         print(colored(f"\n=== Conversation {idx} - Round {conversation['round_num']} ===\n", "cyan"))
 
-        response = chat_completion_request(messages, model=GENERATOR_MODEL_NAME, temperature=1)
-
+        response, call = chat_completion_request.call(
+            messages,
+            model=GENERATOR_MODEL_NAME,
+            temperature=1
+        )
         assistant_message = response.choices[0].message
         assistant_content = assistant_message.content
         messages.append({"role": "assistant", "content": assistant_content})
+        conversation["messages"] = messages
+        
+        call_ids_dict = {
+            "call_id": call.id,
+            "trace_id": call.trace_id,
+            "parent_id": call.parent_id
+        }
+        conversation["call_ids_dict"] = call_ids_dict
 
-        feedback, success = verify_response(assistant_content, ghci)
+        feedback, success = verify_response(assistant_content, ghci, call_ids_dict)
 
         if success:
-            write_solution(feedback)
+            write_solution(feedback, call_ids_dict)
             return feedback, success
 
         messages.append({"role": "user", "content": feedback})
@@ -262,15 +287,25 @@ def process_conversation(conversation, ghci):
 
     return conversation, False
 
-def write_solution(solution):
+def write_solution(solution, call_ids_dict):
     """
-    Write a solution to the 'solutions.txt' file.
+    Write a solution to the 'solutions.txt' file along with the Call ID, Trace ID, and Parent ID.
     """
     with open("solutions.txt", "a+") as f:
+        f.write(f"Call ID: {call_ids_dict['call_id']}\n")
+        f.write(f"Trace ID: {call_ids_dict['trace_id']}\n")
+        f.write(f"Parent ID: {call_ids_dict['parent_id']}\n")
         f.write(solution + "\n\n")
-    print(colored("Solution has been saved to 'solutions.txt' 🚀", "light_green"))
+    print(colored(f"Solution has been saved to 'solutions.txt' with Call ID: {call_ids_dict['call_id']} 🚀", "light_green"))
+    weave.save({
+        'call_id': call_ids_dict['call_id'],
+        'trace_id': call_ids_dict['trace_id'],
+        'parent_id': call_ids_dict['parent_id'],
+        'solution': solution,
+        'success': True
+    })
 
-def verify_response(assistant_content, ghci):
+def verify_response(assistant_content, ghci, call_ids_dict):
     success = False
     feedback = None
 
@@ -285,11 +320,11 @@ def verify_response(assistant_content, ghci):
         },
     ]
 
-    response_verifier = chat_completion_request(
+    response_verifier, call = chat_completion_request.call(
         verifier_messages,
         model=VERIFIER_MODEL_NAME,
-        functions=verifier_function_schemas,  # Passed the defined function schemas
-        function_call={"name": "extract_invert_function"}  # Specified which function to call
+        functions=verifier_function_schemas,
+        function_call={"name": "extract_invert_function"}
     )
 
     assistant_verifier_message = response_verifier.choices[0].message
@@ -318,6 +353,13 @@ def verify_response(assistant_content, ghci):
                 print(colored(invert_code, "yellow"))
                 success = True
                 feedback = invert_code
+                weave.publish({
+                    'call_id': call_ids_dict['call_id'],
+                    'trace_id': call_ids_dict['trace_id'],
+                    'parent_id': call_ids_dict['parent_id'],
+                    'solution': feedback,
+                    'success': True
+                }, call_ids_dict['call_id'])
             else:
                 feedback = (
                     "Your invert function is incorrect. "
@@ -328,7 +370,6 @@ def verify_response(assistant_content, ghci):
                 print(colored(invert_code, "yellow"))
 
     return feedback, success
-
 
 
 if __name__ == "__main__":

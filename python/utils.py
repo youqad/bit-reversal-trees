@@ -6,14 +6,9 @@ from dotenv import load_dotenv, find_dotenv
 import os
 import json
 import litellm
-litellm.drop_params=True
+import weave
+litellm.drop_params = True
 litellm.modify_params = True
-
-try:
-    import weave
-except ImportError:
-    print("Warning: weave module not found. No LLM logging will be done.")
-    weave = None
 
 load_dotenv(find_dotenv(), override=True)
 
