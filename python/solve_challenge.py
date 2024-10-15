@@ -22,11 +22,10 @@ load_dotenv(find_dotenv())
 
 weave.init('bit-reversal-trees')
 
-# Define function schemas for LiteLLM
 verifier_function_schemas = [
     {
         "name": "extract_invert_function",
-        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
+        "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements. Return the code of the function and a boolean indicating if it satisfies the syntactic requirements.",
         "parameters": {
             "type": "object",
             "properties": {

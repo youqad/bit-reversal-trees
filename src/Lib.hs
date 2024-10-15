@@ -229,7 +229,7 @@ invertO1MiniWithHelperFns3 tree = buildTree (map reverseBits (collectLeaves tree
           in Node leftSubtree rightSubtree
 
 
--- Claude's implementation, which passes all tests
+-- Claude 3.5 Sonnet's implementation, which passes all tests
 -- BUT does not satisfy the syntactic constraint "no helper functions"
 invertClaude :: Tree a -> Tree a
 invertClaude (Leaf x) = Leaf x
