@@ -4,6 +4,7 @@
   <a href="https://www.haskell.org/ghcup/"><img src="https://img.shields.io/badge/Haskell-5e5086?style=flat-square&logo=haskell&logoColor=white" alt="Haskell"></a>&nbsp;
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" alt="Python"></a>&nbsp;
   <a href="https://platform.openai.com/docs/api-reference"><img src="https://img.shields.io/badge/OpenAI-74aa9c?style=flat-square&logo=openai&logoColor=white" alt="OpenAI"></a>&nbsp;
+  <a href="https://docs.anthropic.com/en/api/getting-started"><img src="https://img.shields.io/badge/Anthropic-c99d78?style=flat-square&logo=Anthropic&logoColor=black&color=c99d78&" alt="Anthropic"></a>&nbsp;
   <a href="https://wandb.ai/site"><img src="https://img.shields.io/badge/W%26B-000000?style=flat-square&logo=weightsandbiases&logoColor=white" alt="W&B"></a>&nbsp;
   <a href="https://x.com/VictorTaelin/status/1844886809005687270"><img src="https://img.shields.io/badge/Post-%23000000.svg?style=flat-square&logo=X&logoColor=white" alt="X"></a>
 </p>
