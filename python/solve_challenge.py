@@ -15,13 +15,14 @@ from tqdm import tqdm
 from pprint import pprint
 from dotenv import load_dotenv, find_dotenv
 import warnings
+from weave.trace.serialize import to_json
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="wandb")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="weave")
 
 load_dotenv(find_dotenv())
 
-weave.init("bit-reversal-trees")
+weave_client = weave.init("bit-reversal-trees")
 
 verifier_function_schemas = [
     {
@@ -154,25 +155,53 @@ def extract_failed_info(output):
     else:
         return "Failed to extract detailed failure information."
 
+def get_call_dict(call, response_choice):
+    global weave_client
+    project_id = getattr(call, "project_id", None)
 
-def get_call_dict(call):
+    def serialize_value(value):
+        return to_json(value, project_id, weave_client)
+
+    # output_class = getattr(call, "output")
+    # output_dict = output_class.__dict__
+    # choices = output_dict.get("choices", [])
+
+    # choices = response.choices
+    # choice = choices[choice_index]
+    # message_dict = serialize_value(getattr(choice, "message", {}))
+    # serialized_choice = {
+    #     "finish_reason": getattr(choice, "finish_reason", None),
+    #     "index": getattr(choice, "index", None),
+    #     "message": {
+    #         "content": message_dict.get("content", None),
+    #         "role": message_dict.get("role", None),
+    #         "tool_calls": message_dict.get("tool_calls", None),
+    #         "function_call": message_dict.get("function_call", None),
+    #     }
+    # }
+    # choices.append(serialized_choice)
+
+    serialized_output = serialize_value(getattr(call, "output", {}))
+    # serialized_output["choices"] = choices
+    
     call_dict = {
         "id": getattr(call, "id", None),
-        "project_id": getattr(call, "project_id", None),
+        "project_id": project_id,
         "op_name": getattr(call, "op_name", None),
         "display_name": getattr(call, "display_name", None),
         "trace_id": getattr(call, "trace_id", None),
         "parent_id": getattr(call, "parent_id", None),
         "started_at": getattr(call, "started_at", None),
-        "attributes": getattr(call, "attributes", {}),
-        "inputs": getattr(call, "inputs", {}),
+        "attributes": serialize_value(getattr(call, "attributes", {})),
+        "inputs": serialize_value(getattr(call, "inputs", {})),
         "ended_at": getattr(call, "ended_at", None),
-        "exception": getattr(call, "exception", None),
-        "output": getattr(call, "output", None),
-        "summary": getattr(call, "summary", None),
+        "exception": serialize_value(getattr(call, "exception", None)),
+        "output": serialized_output,
+        "summary": serialize_value(getattr(call, "summary", None)),
         "wb_user_id": getattr(call, "wb_user_id", None),
         "wb_run_id": getattr(call, "wb_run_id", None),
         "deleted_at": getattr(call, "deleted_at", None),
+        "response_choice": response_choice.model_dump(),
     }
     return call_dict
 
@@ -198,7 +227,8 @@ def main():
             response, call = chat_completion_request.call(
                 [initial_message], model=GENERATOR_MODEL_NAME, n=1, temperature=1
             )
-            assistant_content = response.choices[0].message.content
+            response_choice = response.choices[0]
+            assistant_content = response_choice.message.content
             messages = [
                 initial_message,
                 {
@@ -211,6 +241,10 @@ def main():
                 "trace_id": call.trace_id,
                 "parent_id": call.parent_id,
             }
+            call_dict = get_call_dict(call, response_choice)
+            with open("solutions_calls.jsonl", "a+") as f:
+                json.dump(call_dict, f)
+                f.write("\n")
             conversations.append(
                 {
                     "messages": messages,
@@ -218,6 +252,7 @@ def main():
                     "idx": idx + 1,
                     "call_ids_dict": call_ids_dict,
                     "call": call,
+                    "response_choice": response_choice,
                 }
             )
     else:
@@ -241,6 +276,10 @@ def main():
                 "trace_id": call.trace_id,
                 "parent_id": call.parent_id,
             }
+            call_dict = get_call_dict(call, choice)
+            with open("solutions_calls.jsonl", "a+") as f:
+                json.dump(call_dict, f)
+                f.write("\n")
             conversations.append(
                 {
                     "messages": messages,
@@ -248,6 +287,7 @@ def main():
                     "idx": idx + 1,
                     "call_ids_dict": call_ids_dict,
                     "call": call,
+                    "response_choice": choice,
                 }
             )
 
@@ -318,14 +358,14 @@ def process_conversation(conversation, ghci):
     )
 
     messages = conversation["messages"]
-
     first_assistant_message = messages[-1]
     call_ids_dict = conversation["call_ids_dict"]
     feedback, success = verify_response(
         first_assistant_message["content"], ghci, call_ids_dict, conversation["call"]
     )
     if success:
-        write_solution(feedback, call_ids_dict, conversation["call"])
+        response_choice = conversation["response_choice"]
+        write_solution(feedback, call_ids_dict, conversation["call"], response_choice)
         return feedback, success, ghci
 
     messages.append({"role": "user", "content": feedback})
@@ -356,12 +396,14 @@ def process_conversation(conversation, ghci):
         response, call = chat_completion_request.call(
             messages, model=GENERATOR_MODEL_NAME, temperature=1
         )
-        assistant_message = response.choices[0].message
+        response_choice = response.choices[0]
+        assistant_message = response_choice.message
         assistant_content = assistant_message.content
         messages.append({"role": "assistant", "content": assistant_content})
         conversation["messages"] = messages
         conversation["call"] = call
-
+        conversation["response_choice"] = response_choice
+        
         call_ids_dict = {
             "call_id": call.id,
             "trace_id": call.trace_id,
@@ -374,8 +416,9 @@ def process_conversation(conversation, ghci):
         )
 
         if success:
-            write_solution(feedback, call_ids_dict, call)
+            write_solution(feedback, call_ids_dict, call, response_choice)
             return feedback, success, ghci
+
 
         messages.append({"role": "user", "content": feedback})
 
@@ -393,7 +436,7 @@ def process_conversation(conversation, ghci):
     return conversation, False, ghci
 
 
-def write_solution(solution, call_ids_dict, call):
+def write_solution(solution, call_ids_dict, call, choice):
     """
     Write a solution to the 'solutions.txt' file along with the Call ID, Trace ID, and Parent ID.
     Also log the call to 'solutions_calls.jsonl'.
@@ -409,7 +452,7 @@ def write_solution(solution, call_ids_dict, call):
             "light_green",
         )
     )
-    call_dict = get_call_dict(call)
+    call_dict = get_call_dict(call, choice)
     call_dict["solution"] = solution
     with open("solutions_calls.jsonl", "a+") as f:
         json.dump(call_dict, f)
