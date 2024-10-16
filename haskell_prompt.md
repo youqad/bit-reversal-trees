@@ -1,10 +1,9 @@
 ```haskell
 -- Type `Tree` of (perfect) binary trees
 data Tree a = Leaf a | Node (Tree a) (Tree a) 
-    deriving (Eq, Show)
 
-{- Your goal is to implement an `invert :: Tree a -> Tree a` function that performs a bit-reversal
-permutation on a `Tree`. Here's what we mean by that:
+{- You are an expert Haskell competitive programmer. Your goal is to implement an `invert :: Tree a -> Tree a` function that performs a bit-reversal
+permutation on a `Tree`. Here is what we mean by that:
 
 1. Each leaf in the binary tree has a path leading to it, which can be 
    represented as a string of bits: `False` (or `0`) for left, `True` (or `1`) for right.
@@ -13,12 +12,12 @@ permutation on a `Tree`. Here's what we mean by that:
    with the leaf at path `[True, False, False]` (right, left, left).
 
 MANDATORY SYNTACTIC REQUIREMENTS:
-1. The `invert` function must be a standalone, pure, and recursive function. It must NOT rely on any helper function. The ONLY exception about using a helper function is if it uses only one extra bit of state (i.e. `invert` relies on a helper function `invert' :: Bool -> Tree a -> Tree a`). But know that relying on such a helper function is not necessary: there exist solutions that do not require any helper function.
-2. Only use recursion (no loops).
-3. Maintain purity (no side effects or mutability).
+1. The `invert` function must be a standalone, pure, and recursive function. 
+2. It must NOT rely on any helper function, with one possible exception: you can use a single helper inner function of type `Bool -> Tree a -> Tree a` if needed, but it is not necessary: there exist solutions that do not rely on any helper function.
+3. Only use recursion (no loops).
+4. Maintain purity (no side effects or mutability).
 
-This is a hard problem, so think deeply and carefully double-check your solution against the tests.
-I guarantee you that it is solvable within the constraints. Keep trying and don't give up!
+Remember, this is a challenging problem, so think step-by-step before implementing your solution and carefully review it to make sure it meets all the requirements. Test your implementation against the test cases to verify its correctness. I guarantee you that it is solvable within the constraints, so take your time to think it through carefully.
 -}
 
 -- Implement the `invert` function:
@@ -56,8 +55,6 @@ expectedTree3 = Node (Node (Node (Node (Leaf 10) (Leaf 11)) (Node (Leaf 9) (Leaf
 
 main = do
     mapM_ (\(input, expected) -> do
-        putStrLn "Input:"
-        print input
         putStrLn "Expected output:"
         print expected
         putStrLn "Actual output:"
