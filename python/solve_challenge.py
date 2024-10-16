@@ -241,10 +241,6 @@ def main():
                 "trace_id": call.trace_id,
                 "parent_id": call.parent_id,
             }
-            call_dict = get_call_dict(call, response_choice)
-            with open("solutions_calls.jsonl", "a+") as f:
-                json.dump(call_dict, f)
-                f.write("\n")
             conversations.append(
                 {
                     "messages": messages,
@@ -276,10 +272,6 @@ def main():
                 "trace_id": call.trace_id,
                 "parent_id": call.parent_id,
             }
-            call_dict = get_call_dict(call, choice)
-            with open("solutions_calls.jsonl", "a+") as f:
-                json.dump(call_dict, f)
-                f.write("\n")
             conversations.append(
                 {
                     "messages": messages,
@@ -360,11 +352,11 @@ def process_conversation(conversation, ghci):
     messages = conversation["messages"]
     first_assistant_message = messages[-1]
     call_ids_dict = conversation["call_ids_dict"]
+    response_choice = conversation["response_choice"]
     feedback, success = verify_response(
-        first_assistant_message["content"], ghci, call_ids_dict, conversation["call"]
+        first_assistant_message["content"], ghci, call_ids_dict, conversation["call"], response_choice
     )
     if success:
-        response_choice = conversation["response_choice"]
         write_solution(feedback, call_ids_dict, conversation["call"], response_choice)
         return feedback, success, ghci
 
@@ -412,7 +404,7 @@ def process_conversation(conversation, ghci):
         conversation["call_ids_dict"] = call_ids_dict
 
         feedback, success = verify_response(
-            assistant_content, ghci, call_ids_dict, call
+            assistant_content, ghci, call_ids_dict, call, response_choice
         )
 
         if success:
@@ -465,7 +457,7 @@ def write_solution(solution, call_ids_dict, call, choice):
     )
 
 
-def verify_response(assistant_content, ghci, call_ids_dict, call):
+def verify_response(assistant_content, ghci, call_ids_dict, call, response_choice):
     success = False
     feedback = None
 
@@ -520,7 +512,7 @@ def verify_response(assistant_content, ghci, call_ids_dict, call):
                 print(colored(invert_code, "yellow"))
                 success = True
                 feedback = invert_code
-                call_dict = get_call_dict(call)
+                call_dict = get_call_dict(call, response_choice)
                 weave.publish(
                     {
                         "call_id": call_ids_dict["call_id"],
