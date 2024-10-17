@@ -78,7 +78,7 @@ where:
 
 ### Step-by-Step Guide
 
-#### Haskell
+#### Haskell Setup
 
 1. Clone the repository:
    ```sh
@@ -99,7 +99,7 @@ where:
    ```
 
 
-#### Python
+#### Python Setup
 4. Set up the Python environment:
    ```sh
    cd python
@@ -122,14 +122,25 @@ where:
    MAX_ROUNDS=8 # Number of rounds/turns per conversation, in the LLM search
    ```
 
-6. Run the Python LLM search:
+## Haskell LLM-based Program Synthesis search
+
+6. Run the LLM search:
    ```sh
+   export PROGRAM_SYNTHESIS_LANGUAGE=haskell
    python solve_challenge.py
    ```
 
-7. To run the Python tests:
+7. To run the Python GHCi tests:
    ```sh
-   python -m pytest test_solve_challenge.py
+   python -m pytest test_solve_challenge_ghci.py
+   ```
+
+## Python LLM-based Program Synthesis search
+
+8. Run the Python LLM search:
+   ```sh
+   export PROGRAM_SYNTHESIS_LANGUAGE=python
+   python solve_challenge.py
    ```
 
 ## Haskell Implementations
