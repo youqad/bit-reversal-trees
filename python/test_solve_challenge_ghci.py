@@ -1,6 +1,7 @@
 import pytest
 import pexpect
-from solve_challenge import run_tests, create_ghci_process
+from python.solve_challenge import run_tests
+from python.utils import create_ghci_process
 
 @pytest.fixture(scope="module")
 def ghci_process():
@@ -16,7 +17,7 @@ invert :: Tree a -> Tree a
 invert (Leaf a) = Leaf a
 invert (Node l r) = Node (invert r) (invert l)
 '''
-    result, output = run_tests(incorrect_invert_code, ghci_process)
+    result, output = run_tests(incorrect_invert_code, ghci_process, program_synthesis_language="haskell")
     print(f"Result: {result}")
     print(f"Output: {output}")
     assert result == False
@@ -32,7 +33,7 @@ invert (Node l@(Node _ _) r@(Node _ _)) =
           (invert (Node (invert lr) (invert rr)))
 invert t = t
 """
-    result, output = run_tests(correct_invert_code, ghci_process)
+    result, output = run_tests(correct_invert_code, ghci_process, program_synthesis_language="haskell")
     print(f"Result: {result}")
     print(f"Output: {output}")
     assert result == True, f"Expected True, got {result}. Output: {output}"
