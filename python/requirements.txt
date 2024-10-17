@@ -8,3 +8,6 @@ pexpect
 tqdm
 pytest
 litellm
+# Desktop notifications
+notify2
+pync
