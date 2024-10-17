@@ -3,6 +3,9 @@ import json
 import subprocess
 import copy
 import sys
+import platform
+# import notify2
+import pync
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.abspath("../../"))
@@ -334,7 +337,19 @@ def main():
         )
     finally:
         ghci.close(force=True)
+    
+    # Send desktop notification
+    send_desktop_notification(f"Search complete: {len(solutions)} solutions found!")
 
+def send_desktop_notification(message):
+    if platform.system() == "Darwin":
+        pync.notify(message, title="Haskell Challenge Solver")
+    # elif platform.system() == "Linux":
+    #     notify2.init("Haskell Challenge Solver")
+    #     notification = notify2.Notification("Haskell Challenge Solver", message)
+    #     notification.show()
+    else:
+        print("Desktop notifications are not supported on this platform.")
 
 def process_conversation(conversation, ghci):
     """
