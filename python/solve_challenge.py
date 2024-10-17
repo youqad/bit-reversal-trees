@@ -45,7 +45,7 @@ verifier_function_schemas = [
     },
 ]
 
-MAX_CONSECUTIVE_TIMEOUTS = 3
+MAX_CONSECUTIVE_TIMEOUTS = 2
 consecutive_timeouts = 0
 
 
@@ -100,6 +100,7 @@ def run_tests(invert_code, ghci):
             elif index == 1:
                 # GHCi is asking to display all possibilities, send 'n' to proceed
                 ghci.sendline("n")
+        # ghci.expect_exact("ghci_prompt> ", timeout=30)
 
         print("Running testInvert...")
         ghci.sendline("testInvert invert")
@@ -381,9 +382,17 @@ def process_conversation(conversation, ghci):
                     "magenta",
                 )
             )
-            ghci.close(force=True)
-            ghci = create_ghci_process()
             consecutive_timeouts = 0
+            try:
+                ghci.close(force=True)
+            except pexpect.exceptions.ExceptionPexpect as e:
+                print(colored(f"Error closing GHCi: {e}", "yellow"))
+                print("Attempting to create a new GHCi process anyway...")
+            try:
+                ghci = create_ghci_process()
+            except Exception as e:
+                print(colored(f"Error creating new GHCi process: {e}", "red"))
+                print("Continuing with the existing GHCi process...")
 
         response, call = chat_completion_request.call(
             messages, model=GENERATOR_MODEL_NAME, temperature=1
