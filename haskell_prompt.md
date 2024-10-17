@@ -2,14 +2,11 @@
 -- Type `Tree` of (perfect) binary trees
 data Tree a = Leaf a | Node (Tree a) (Tree a) 
 
-{- You are an expert Haskell competitive programmer. Your goal is to implement an `invert :: Tree a -> Tree a` function that performs a bit-reversal
-permutation on a `Tree`. Here is what we mean by that:
+{- You are an expert Haskell competitive programmer. Your goal is to implement an `invert :: Tree a -> Tree a` function that performs a bit-reversal permutation on a `Tree`. Here is what we mean by that:
 
 1. Each leaf in the binary tree has a path leading to it, which can be 
    represented as a string of bits: `False` (or `0`) for left, `True` (or `1`) for right.
-2. The bit-reversal permutation swaps a leaf at path `p` with the leaf at path `reverse p`.
-3. For example, a leaf at path `[False, False, True]` (left, left, right) would be swapped
-   with the leaf at path `[True, False, False]` (right, left, left).
+2. The bit-reversal permutation swaps a leaf at path `p` with the leaf at path `reverse p`. For example, a leaf at path `[False, False, True]` (left, left, right) would be swapped with the leaf at path `[True, False, False]` (right, left, left).
 
 MANDATORY SYNTACTIC REQUIREMENTS:
 1. The `invert` function must be a standalone, pure, and recursive function. 
