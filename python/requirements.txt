@@ -11,3 +11,4 @@ litellm
 # Desktop notifications
 notify2
 pync
+hypothesis
