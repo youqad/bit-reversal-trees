@@ -116,16 +116,15 @@ def run_tests(
     elif program_synthesis_language == "python":
         try:
             # local namespace for exec
-            local_namespace = {}
-            global_namespace = {
+            namespace = {
                 "__builtins__": __builtins__,
                 "Tree": Tree,
                 "Leaf": Leaf,
                 "Node": Node,
             }
-            exec(invert_code, global_namespace, local_namespace)
+            exec(invert_code, namespace, namespace)
 
-            invert_function = local_namespace.get("invert", None)
+            invert_function = namespace.get("invert", None)
             print(f"Invert function: {invert_function}")
             if invert_function is None:
                 consecutive_timeouts = 0
