@@ -124,7 +124,6 @@ class TestInvertFunction(unittest.TestCase):
         cls.invert = staticmethod(invert_function)
 
     @settings(
-        # max_examples=100,
         deadline=10000,  # 10 seconds per test case
         suppress_health_check=[HealthCheck.too_slow],
         database=None,

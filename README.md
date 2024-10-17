@@ -130,9 +130,9 @@ where:
    python solve_challenge.py
    ```
 
-7. To run the Python GHCi tests:
+7. To test Haskell's QuickCheck tests:
    ```sh
-   python -m pytest test_solve_challenge_ghci.py
+   python -m pytest test_solve_challenge_quickcheck.py
    ```
 
 ## Python LLM-based Program Synthesis search
@@ -141,6 +141,11 @@ where:
    ```sh
    export PROGRAM_SYNTHESIS_LANGUAGE=python
    python solve_challenge.py
+   ```
+
+9. To test Python's Hypothesis tests:
+   ```sh
+   python -m pytest test_solve_challenge_hypothesis.py
    ```
 
 ## Haskell Implementations

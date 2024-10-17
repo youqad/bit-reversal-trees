@@ -1,5 +1,4 @@
 import pytest
-import pexpect
 from python.solve_challenge import run_tests
 from python.utils import create_ghci_process
 
