@@ -25,13 +25,13 @@ testInvert invert = hspec $ do
                     -- ++ "Original tree: "
                     -- ++ prettyPrintTree tree
                     -- ++ "\n"
-                    ++ "Original flattened: "
+                    ++ "Original tree, flattened: "
                     ++ show xs_flat
                     ++ "\n"
-                    ++ "Expected flattened: "
+                    ++ "Expected tree, flattened: "
                     ++ show ys_expected
                     ++ "\n"
-                    ++ "Inverted flattened: "
+                    ++ "Your inverted tree, flattened: "
                     ++ show ys_flat
                 )
               $ ys_flat `shouldBe` ys_expected
