@@ -56,12 +56,13 @@ def bit_reverse_permutation(values: list) -> list:
 #         return Node(left, right)
 
 @composite
-def perfect_binary_trees(draw, depth):
+def perfect_binary_trees(draw, max_depth=4):
+    depth = draw(st.integers(min_value=1, max_value=max_depth))
     num_leaves = 2 ** depth
     values = list(range(num_leaves))
     shuffled_values = draw(st.permutations(values))
     tree, remaining_values = build_tree(depth, shuffled_values)
-    assert len(remaining_values) == 0  # Ensure all values have been used
+    assert len(remaining_values) == 0  # make sure all values have been used
     return tree
 
 def build_tree(depth, values):
@@ -128,7 +129,7 @@ class TestInvertFunction(unittest.TestCase):
         suppress_health_check=[HealthCheck.too_slow],
         database=None,
     )
-    @given(perfect_binary_trees(depth=5))
+    @given(perfect_binary_trees(max_depth=4))
     def test_invert_function(self, tree):
         invert_func = TestInvertFunction.invert
         original_flat = flatten_tree(tree)
