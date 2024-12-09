@@ -24,6 +24,8 @@ Victor's challenge involves coming up with a prompt to show that a LLM is capabl
   </a>
 </p>
 
+### Initial Prompt
+
 My Haskell prompt, adapted from [Victor's prompt](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa) and kept under 1k tokens, is in [`haskell_prompt.md`](haskell_prompt.md). The Python prompt is in [`python_prompt.md`](python_prompt.md).
 Note that there are two versions of the prompt, for each language: one that allows the use of a helper function using one extra bit of state, and one that does not mention any such helper function ([`haskell_prompt_no_helper.md`](haskell_prompt_no_helper.md) and [`python_prompt_no_helper.md`](python_prompt_no_helper.md)).
 
@@ -129,18 +131,18 @@ where:
 
 ## LLM-based Program Synthesis search
 
-The project supports searching over either Haskell or Python programs using a very simple/naive LLM-based search approach (because we're not supposed to give any hint to the LLM, other than the 1k tokens of the initial prompt and [access to a function interpreter](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa?permalink_comment_id=5232410#gistcomment-5232410)).
+The [`python/solve_challenge.py`](python/solve_challenge.py) script searches over either Haskell or Python programs using a very simple/naive LLM-based search approach (because we're not supposed to give any hint to the LLM, other than the 1k tokens of the initial prompt and [access to a function interpreter](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa?permalink_comment_id=5232410#gistcomment-5232410)). It follows these steps:
 
-1. A generator LLM (specified by `GENERATOR_MODEL_NAME`) produces an initial implementation of the `invert` function in the language specified by `PROGRAM_SYNTHESIS_LANGUAGE` (Haskell or Python), giving rise to a trajectory/conversation (i.e. a sequence of messages). We can use the `NUM_INITIAL_SOLUTIONS` environment variable to specify the number of conversations to run (in parallel if possible, or sequentially otherwise).
+1. A generator LLM (specified by `GENERATOR_MODEL_NAME`) produces an initial implementation of the `invert` function (as a solution to [the initial prompt](https://github.com/youqad/bit-reversal-trees?tab=readme-ov-file#initial-prompt)) in the language specified by `PROGRAM_SYNTHESIS_LANGUAGE` (Haskell or Python), starting a trajectory/conversation (i.e. a sequence of messages). We can use the `NUM_INITIAL_SOLUTIONS` environment variable to specify the number of conversations to run (in parallel if possible, or sequentially otherwise).
 2. The initial implementation goes through:
-   - a syntactic verification by a verifier LLM (`VERIFIER_MODEL_NAME`), that checks if the implementation satisfies the syntactic constraints of the challenge
-   - a property-based testing (QuickCheck for Haskell, Hypothesis for Python), that checks if the implementation satisfies the functional desired requirements
+   - a syntactic verification by a verifier LLM (`VERIFIER_MODEL_NAME`), which checks if the implementation satisfies the syntactic constraints of the challenge
+   - a property-based testing (QuickCheck in [`test/DynamicSpec.hs`](test/DynamicSpec.hs) for Haskell, Hypothesis in [`python/test_solve_challenge_hypothesis.py`](python/test_solve_challenge_hypothesis.py) for Python), checking if the implementation satisfies the desired functional requirement
 3. Failed implementations enter a refinement loop where:
    - ❌ if the implementation is deemed syntactically incorrect by the verifier LLM (`VERIFIER_MODEL_NAME`): the message "The proposed invert function does not satisfy the syntactic requirements. Please revise your implementation." is sent back to the generator LLM (`GENERATOR_MODEL_NAME`) (no hints are given) and the conversation continues 
    - ❌ if the implementation is deemed syntactically correct but fails on one test case (i.e. it does not satisfy the functional desired requirements): the counter-example is sent back to the generator LLM (`GENERATOR_MODEL_NAME`) and the conversation continues
    - ❌ if the implementation times out: the message "Your code caused a timeout during testing. Please review your implementation." is sent back to the generator LLM (`GENERATOR_MODEL_NAME`) and the conversation continues
    - ✅ if the implementation is deemed syntactically correct and passes all the test cases: the conversation stops and the solution is logged.
-4. The process repeats until either:
+4. Rinse and repeat: the process repeats until either:
      - a valid solution is found
      - or the maximum number of rounds (`MAX_ROUNDS`) is reached for the current conversation
 
@@ -228,18 +230,6 @@ def invert(tree: Tree) -> Tree:
 
 Some other examples of "almost solutions" that ended up passing all tests but not satisfying the syntactic constraints (i.e. the verifier LLM didn't flag them as incorrect by mistake), for various generators, can be found in the [python/some_almost_solutions_found](python/some_almost_solutions_found) directory.
 
-
-## Python LLM Search
-
-The [`python/solve_challenge.py`](python/solve_challenge.py) script uses OpenAI's GPT models to search for valid Haskell implementations of the bit-reversal tree inversion function. It follows these steps:
-
-1. Generate initial solutions to the prompt [`haskell_prompt.md`](haskell_prompt.md) using the generator LLM (`GENERATOR_MODEL_NAME` in `.env`)
-
-2. For each one of them, verify the syntactic correctness using the verifier LLM (`VERIFIER_MODEL_NAME` in `.env`)
-3. For the syntactically correct ones, run the suggested solutions through the Haskell QuickCheck tests in [`test/DynamicSpec.hs`](test/DynamicSpec.hs)
-
-4. Rinse and repeat: iterate and the refine solutions based on the test results
-
 ## Testing Custom Implementations
 
 You can test your own implementations of the `invert` function in both Python (with the [`python/test_custom_invert.py`](python/test_custom_invert.py) script) and Haskell (with `stack test`).
@@ -263,7 +253,7 @@ def invert(tree: Tree) -> Tree:
     return tree
 ```
 
-In the [`python`](python) directory, to test your Python implementation, either:
+In the [`python`](python) directory, to test your Python implementation with the [`python/test_custom_invert.py`](python/test_custom_invert.py) script, either:
 - Save it to a file (e.g. `custom_implementation.py`) and run:
    ```bash
    python test_custom_invert.py custom_implementation.py
@@ -295,7 +285,7 @@ To test your Haskell implementation, replace the `invert` function in `src/Lib.h
 stack test
 ```
 
-Both testing methods use property-based testing (Hypothesis for Python, QuickCheck for Haskell) to verify that your implementation correctly performs the bit-reversal permutation on the tree leaves.
+Both testing methods use property-based testing (Hypothesis for Python, QuickCheck for Haskell) to check whether your implementation correctly performs the bit-reversal permutation on the tree leaves.
 
 ## License
 
