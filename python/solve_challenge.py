@@ -97,7 +97,9 @@ def run_tests(
             elif "Failures:" in output or "error:" in output:
                 print(colored("❌ Tests failed.", "red"))
                 consecutive_timeouts = 0
-                return False, extract_failed_info(output, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE)
+                return False, extract_failed_info(
+                    output, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE
+                )
             else:
                 print(colored("❌ Unknown test result.", "red"))
                 consecutive_timeouts = 0
@@ -186,8 +188,10 @@ def main():
 
     conversations = []
 
-    if GENERATOR_MODEL_NAME.startswith("o1") or GENERATOR_MODEL_NAME.startswith(
-        "claude"
+    if (
+        GENERATOR_MODEL_NAME.startswith("o1")
+        or GENERATOR_MODEL_NAME.startswith("claude")
+        or GENERATOR_MODEL_NAME.startswith("anthropic")
     ):
         # For o1 models and Claude, make separate requests (n>1 is not supported)
         for idx in range(NUM_INITIAL_SOLUTIONS):
