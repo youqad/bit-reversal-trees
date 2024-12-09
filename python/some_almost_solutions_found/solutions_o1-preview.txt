@@ -1,0 +1,15 @@
+invert :: Tree a -> Tree a
+invert (Leaf x) = Leaf x
+invert (Node l r) = combine (invert l) (invert r)
+  where
+    combine (Leaf a) (Leaf b) = Node (Leaf a) (Leaf b)
+    combine (Node a b) (Node c d) = Node (combine a c) (combine b d)
+    combine _ _ = error "Tree is not perfect"
+
+invert :: Tree a -> Tree a
+invert (Leaf x) = Leaf x
+invert (Node l r) = merge (invert l) (invert r)
+  where
+    merge (Leaf a) (Leaf b) = Node (Leaf a) (Leaf b)
+    merge (Node a b) (Node c d) = Node (merge a c) (merge b d)
+    merge _ _ = error "Tree is not perfect"

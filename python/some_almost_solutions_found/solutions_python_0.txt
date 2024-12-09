@@ -1,0 +1,59 @@
+Call ID: 01929c83-3d9c-72f3-aef2-77d3913ee590
+Trace ID: 01929c83-3d9c-72f3-aef2-77ed3f1acd1f
+Parent ID: None
+def invert(tree: Tree) -> Tree:
+    def tree_height(t: Tree) -> int:
+        if isinstance(t, Leaf):
+            return 0
+        return 1 + tree_height(t.left)
+
+    def reverse_bits(n: int, bits: int) -> int:
+        return int(format(n, f'0{bits}b')[::-1], 2)
+
+    def invert_helper(t: Tree, path: int, depth: int, height: int) -> Tree:
+        if isinstance(t, Leaf):
+            reversed_path = reverse_bits(path, height)
+            return find_leaf(tree, reversed_path, height)
+        else:
+            left = invert_helper(t.left, path << 1, depth + 1, height)
+            right = invert_helper(t.right, (path << 1) | 1, depth + 1, height)
+            return Node(left, right)
+
+    def find_leaf(t: Tree, path: int, height: int) -> Leaf:
+        for _ in range(height):
+            if path & (1 << (height - 1)):
+                t = t.right
+            else:
+                t = t.left
+            height -= 1
+        return t
+
+    height = tree_height(tree)
+    return invert_helper(tree, 0, 0, height)
+
+Call ID: 01929c84-aa66-7a03-9629-a5bab244e233
+Trace ID: 01929c84-aa66-7a03-9629-a5c1aba722da
+Parent ID: None
+def invert(tree: Tree) -> Tree:
+    def collect_leaves(t: Tree) -> list[int]:
+        if isinstance(t, Leaf):
+            return [t.value]
+        return collect_leaves(t.left) + collect_leaves(t.right)
+
+    def invert_helper(t: Tree, path: int, depth: int, leaves: list[int]) -> Tree:
+        if isinstance(t, Leaf):
+            reversed_path = int(format(path, f'0{depth}b')[::-1], 2)
+            return Leaf(leaves[reversed_path])
+        left = invert_helper(t.left, path << 1, depth, leaves)
+        right = invert_helper(t.right, (path << 1) | 1, depth, leaves)
+        return Node(left, right)
+
+    def tree_depth(t: Tree) -> int:
+        if isinstance(t, Leaf):
+            return 0
+        return 1 + tree_depth(t.left)
+
+    depth = tree_depth(tree)
+    leaves = collect_leaves(tree)
+    return invert_helper(tree, 0, depth, leaves)
+

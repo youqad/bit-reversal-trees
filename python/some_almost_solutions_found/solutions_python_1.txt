@@ -1,0 +1,26 @@
+Call ID: 01929de7-a02c-7062-ae94-d5e8db5f6edc
+Trace ID: 01929de7-a02c-7062-ae94-d5f67c7b1540
+Parent ID: None
+def invert(tree: Tree) -> Tree:
+    def get_depth(t: Tree) -> int:
+        return 0 if isinstance(t, Leaf) else 1 + get_depth(t.left)
+
+    def collect_leaves(t: Tree, path: int, depth: int) -> list:
+        if isinstance(t, Leaf):
+            return [(t.value, path)]
+        else:
+            return (collect_leaves(t.left, path << 1, depth + 1) +
+                    collect_leaves(t.right, (path << 1) | 1, depth + 1))
+
+    def rebuild(leaves: list, depth: int) -> Tree:
+        if depth == 0:
+            return Leaf(leaves[0][0])
+        else:
+            mid = len(leaves) // 2
+            return Node(rebuild(leaves[:mid], depth - 1), rebuild(leaves[mid:], depth - 1))
+
+    total_depth = get_depth(tree)
+    leaves = collect_leaves(tree, 0, 0)
+    leaves.sort(key=lambda x: int(f'{x[1]:0{total_depth}b}'[::-1], 2))
+    return rebuild(leaves, total_depth)
+

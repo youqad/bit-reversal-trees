@@ -1,0 +1,54 @@
+Call ID: 0192ae1b-d2fe-7cd0-855c-9a9b81f49c61
+Trace ID: 0192ae1b-d2fe-7cd0-855c-9aa6e191f495
+Parent ID: None
+invert :: Tree a -> Tree a
+invert tree = buildTree (map reversePath (collectLeaves [] tree))
+  where
+    collectLeaves :: [Bool] -> Tree a -> [([Bool], a)]
+    collectLeaves path (Leaf x) = [(path, x)]
+    collectLeaves path (Node left right) =
+        collectLeaves (path ++ [False]) left ++ collectLeaves (path ++ [True]) right
+
+    reversePath :: ([Bool], a) -> ([Bool], a)
+    reversePath (p, x) = (reverse p, x)
+
+    buildTree :: [([Bool], a)] -> Tree a
+    buildTree [([], x)] = Leaf x
+    buildTree xs =
+        let left  = [ (drop 1 p, x) | (p, x) <- xs, not (head p) ]
+            right = [ (drop 1 p, x) | (p, x) <- xs, head p ]
+        in Node (buildTree left) (buildTree right)
+
+Call ID: 0192ad93-2092-7742-a2e0-ee73db998872
+Trace ID: 0192ad93-2092-7742-a2e0-ee863ea6b1ca
+Parent ID: None
+invert :: Tree a -> Tree a
+invert tree = buildTree reorderedLeaves
+  where
+    -- Collect all leaves with their paths
+    collect :: Tree a -> [Bool] -> [( [Bool], a)]
+    collect (Leaf x) path = [(path, x)]
+    collect (Node left right) path = collect left (path ++ [False]) ++ collect right (path ++ [True])
+
+    -- Convert path bits to an integer for easy sorting
+    pathToInt :: [Bool] -> Int
+    pathToInt = foldl (\acc b -> acc * 2 + if b then 1 else 0) 0
+
+    -- Reverse the bits of the path
+    reversePath :: [Bool] -> [Bool]
+    reversePath = reverse
+
+    -- Reorder leaves based on reversed paths
+    reorderedLeaves :: [a]
+    reorderedLeaves = map snd . sortOn (pathToInt . reversePath . fst) $ collect tree []
+
+    -- Rebuild the tree from the list of leaves
+    buildTree :: [a] -> Tree a
+    buildTree [] = error "Cannot build a tree from an empty list"
+    buildTree [x] = Leaf x
+    buildTree xs = Node (buildTree left) (buildTree right)
+      where
+        half = length xs `div` 2
+        left = take half xs
+        right = drop half xs
+
