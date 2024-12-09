@@ -1,0 +1,51 @@
+Call ID: 0192b546-ad4b-7b11-89cd-c1b6caa3bebb
+Trace ID: 0192b546-ad4b-7b11-89cd-c1ce3f0037ef
+Parent ID: None
+invert :: Tree a -> Tree a
+invert (Leaf x) = Leaf x
+invert (Node l r) = go l' r'
+  where
+    l' = invert l
+    r' = invert r
+    go (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
+    go (Node ll lr) (Node rl rr) = Node (go ll rl) (go lr rr)
+
+Call ID: 0192b5bd-f40b-70b3-b2de-ac406f6eda13
+Trace ID: 0192b5bd-f40b-70b3-b2de-ac56033204b7
+Parent ID: None
+invert :: Tree a -> Tree a
+invert (Leaf x) = Leaf x
+invert (Node l r) = join (invert l) (invert r)
+  where
+    join (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
+    join (Node l1 r1) (Node l2 r2) = Node (join l1 l2) (join r1 r2)
+
+Call ID: 0192b5c4-507f-7dd2-ae81-2f334a35dc67
+Trace ID: 0192b5c4-507f-7dd2-ae81-2f4bdbe0e99e
+Parent ID: None
+invert :: Tree a -> Tree a
+invert (Leaf x) = Leaf x
+invert (Node l r) = combine (invert l) (invert r)
+  where
+    combine :: Tree a -> Tree a -> Tree a
+    combine (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
+    combine (Node ll lr) (Node rl rr) = Node (combine ll rl) (combine lr rr)
+
+Call ID: 0192b85d-d4da-7663-a017-4979581659ea
+Trace ID: 0192b85d-d4da-7663-a017-498ba628f90e
+Parent ID: None
+invert :: Tree a -> Tree a
+invert tree = invertHelper True tree
+  where
+    invertHelper :: Bool -> Tree a -> Tree a
+    invertHelper _ (Leaf x) = Leaf x
+    invertHelper shouldReverse (Node left right) = 
+        if shouldReverse
+        then combine (invertHelper True left) (invertHelper True right)
+        else Node (invertHelper True left) (invertHelper True right)
+    
+    combine :: Tree a -> Tree a -> Tree a
+    combine (Leaf x) (Leaf y) = Node (Leaf x) (Leaf y)
+    combine (Node l1 r1) (Node l2 r2) = 
+        Node (combine l1 l2) (combine r1 r2)
+

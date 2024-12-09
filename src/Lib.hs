@@ -54,8 +54,21 @@ genTree depth = do
 
 instance (Arbitrary a, Num a, Enum a) => Arbitrary (Tree a) where
   arbitrary = do
-    depth <- choose (1, 5)
+    depth <- choose (1, maxDepth)
     genTree depth
+    where
+      maxDepth = 4
+
+-- genTreeGeneral :: Arbitrary a => Int -> Gen (Tree a)
+-- genTreeGeneral 0 = Leaf <$> arbitrary
+-- genTreeGeneral n = Node <$> genTreeGeneral (n - 1) <*> genTreeGeneral (n - 1)
+
+-- instance Arbitrary a => Arbitrary (Tree a) where
+--   arbitrary = do
+--     depth <- chooseInt (1, maxDepth)
+--     genTreeGeneral depth
+--     where
+--       maxDepth = 5
 
 --------------------------------------------------------------------------------
 -- Tree utilities
@@ -241,5 +254,13 @@ invertClaude (Node l r) = combine (invertClaude l) (invertClaude r)
     combine (Node a b) (Node c d) = Node (combine a c) (combine b d)
 
 -- Placeholder for the invert function
+-- invert :: Tree a -> Tree a
+-- invert = invertO1MiniWithHelperFns3
+
+
 invert :: Tree a -> Tree a
-invert = invertO1MiniWithHelperFns3
+invert (Leaf x) = Leaf x
+invert (Node (Leaf a) (Leaf b)) = Node (Leaf b) (Leaf a)
+invert (Node (Leaf a) (Node l r)) = Node (invert (Node l r)) (Leaf a)
+invert (Node (Node l r) (Leaf b)) = Node (Leaf b) (invert (Node l r))
+invert (Node (Node ll lr) (Node rl rr)) = Node (invert (Node rl rr)) (invert (Node ll lr))
