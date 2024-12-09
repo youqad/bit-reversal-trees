@@ -9,6 +9,8 @@ from hypothesis_tests_python import (
 )
 from termcolor import colored
 
+MAX_DEPTH=6
+
 class TestCustomInvert(unittest.TestCase):
     """Test class to test custom invert functions."""
     invert = None
@@ -24,7 +26,7 @@ class TestCustomInvert(unittest.TestCase):
         verbosity=Verbosity.verbose,
         max_examples=100
     )
-    @given(perfect_binary_trees(max_depth=4))
+    @given(perfect_binary_trees(max_depth=MAX_DEPTH))
     def test_invert_function(self, tree):
         """Test the invert function with randomly generated perfect binary trees."""
         invert_func = self.invert

@@ -129,7 +129,7 @@ where:
 
 ## LLM-based Program Synthesis search
 
-The project supports searching over either Haskell or Python programs using a very simple/naive LLM-based search approach (because we're not supposed to give any hint to the LLM, other than the 1k tokens of the initial prompt).
+The project supports searching over either Haskell or Python programs using a very simple/naive LLM-based search approach (because we're not supposed to give any hint to the LLM, other than the 1k tokens of the initial prompt and [access to a function interpreter](https://gist.github.com/VictorTaelin/45440a737e47b872d7505c6cda27b6aa?permalink_comment_id=5232410#gistcomment-5232410)).
 
 1. A generator LLM (specified by `GENERATOR_MODEL_NAME`) produces an initial implementation of the `invert` function in the language specified by `PROGRAM_SYNTHESIS_LANGUAGE` (Haskell or Python), giving rise to a trajectory/conversation (i.e. a sequence of messages). We can use the `NUM_INITIAL_SOLUTIONS` environment variable to specify the number of conversations to run (in parallel if possible, or sequentially otherwise).
 2. The initial implementation goes through:
