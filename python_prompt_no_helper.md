@@ -16,24 +16,22 @@ class Node(Tree):
 """
 You are an expert Python competitive programmer. Your goal is to implement an `invert(tree: Tree) -> Tree` function that performs a bit-reversal permutation on a `Tree`. Here is what we mean by that:
 
-1. Each leaf in the binary tree has a path leading to it, which can be represented as a sequence of bits: `False` (or `0`) for left, `True` (or `1`) for right.
+1. Each leaf in the perfect binary tree has a path leading to it, which can be represented as a sequence of bits: `False` (or `0`) for left, `True` (or `1`) for right.
 2. The bit-reversal permutation swaps a leaf at path `p` with the leaf at path `reverse(p)`. For example, a leaf at path `[False, False, True]` (left, left, right) would be swapped with the leaf at path `[True, False, False]` (right, left, left).
 
 **MANDATORY SYNTACTIC REQUIREMENTS:**
-1. The `invert` function must be a standalone and pure ONLY relying on an inner function `invert_helper(tree: Tree, flag: bool) -> Tree` that is itself a self-contained single pure recursive function.
-2. Only use recursion (no loops).
-3. Maintain purity (no side effects or mutability).
+1. The `invert` function must be a standalone, pure, and recursive function.
+2. It must NOT rely on any helper function or inner function, it must be a self-contained single recursive function `invert(tree: Tree) -> Tree`.
+3. Only use recursion (no loops).
+4. Maintain purity (no side effects or mutability).
 
-The `flag` parameter is an extra boolean that you can use as you want: the goal is that `invert_helper(tree, True)` should return the bit-reversed tree.
-
-This is a very difficult problem, so think step-by-step before implementing your solution and carefully review it to make sure it meets all the requirements. Test your implementation against the test cases to verify its correctness. I guarantee you that it is solvable within the constraints.
+This is a very difficult problem, so think step-by-step before implementing your solution and carefully review it to make sure it meets all the requirements. Test your implementation against the test cases to verify its correctness. I guarantee you that it is solvable within the constraints, so take your time to think it through carefully.
 """
 
-# Implement the `invert` function as follows:
+# Implement the `invert` function:
 def invert(tree: Tree) -> Tree:
-   def invert_helper(tree: Tree, flag: bool) -> Tree:
-      pass # Replace 'pass' with your implementation
-   return invert_helper(tree, True)
+    # Replace 'pass' with your implementation
+    pass
 
 # Tests:
 test_tree1 = Node(
