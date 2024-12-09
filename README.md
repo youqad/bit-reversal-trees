@@ -170,8 +170,62 @@ The [`python/solve_challenge.py`](python/solve_challenge.py) script uses OpenAI'
 
 4. Rinse and repeat: iterate and the refine solutions based on the test results
 
+## Testing Custom Implementations
 
+You can test your own implementations of the `invert` function in both Python (with the [`python/test_custom_invert.py`](python/test_custom_invert.py) script) and Haskell (with `stack test`).
 
+### Python Implementation
+
+For Python, your implementation should use the provided `Tree`, `Node`, and `Leaf` classes (from [`python/hypothesis_tests_python.py`](python/hypothesis_tests_python.py)) and have the type signature `def invert(tree: Tree) -> Tree`.
+
+Example Python implementation:
+```python
+def invert(tree: Tree) -> Tree:
+    if isinstance(tree, Node) and isinstance(tree.left, Node) and isinstance(tree.right, Node):
+        left_inverted = invert(tree.left)
+        right_inverted = invert(tree.right)
+        left_left_inverted = invert(left_inverted.left)
+        left_right_inverted = invert(left_inverted.right)
+        right_left_inverted = invert(right_inverted.left)
+        right_right_inverted = invert(right_inverted.right)
+        return Node(invert(Node(left_left_inverted, right_left_inverted)), 
+                   invert(Node(left_right_inverted, right_right_inverted)))
+    return tree
+```
+
+In the [`python`](python) directory, to test your Python implementation, either:
+- Save it to a file (e.g. `custom_implementation.py`) and run:
+   ```bash
+   python test_custom_invert.py custom_implementation.py
+   ```
+
+- Or paste it directly in the terminal:
+   ```bash
+   python test_custom_invert.py
+   # Then paste your code and press Ctrl+D when done
+   ```
+
+### Haskell Implementation
+
+For Haskell, your implementation should use the provided `Tree` data type (from [`src/Lib.hs`](src/Lib.hs)) and have the type signature `invert :: Tree a -> Tree a`.
+
+Example Haskell implementation:
+```haskell
+invert :: Tree a -> Tree a
+invert (Node l@(Node _ _) r@(Node _ _)) = 
+    let Node ll lr = invert l
+        Node rl rr = invert r
+    in Node (invert (Node (invert ll) (invert rl))) 
+            (invert (Node (invert lr) (invert rr)))
+invert t = t
+```
+
+To test your Haskell implementation, replace the `invert` function in `src/Lib.hs` with your implementation and run:
+```bash
+stack test
+```
+
+Both testing methods use property-based testing (Hypothesis for Python, QuickCheck for Haskell) to verify that your implementation correctly performs the bit-reversal permutation on the tree leaves.
 
 ## License
 
