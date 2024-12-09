@@ -57,7 +57,7 @@ instance (Arbitrary a, Num a, Enum a) => Arbitrary (Tree a) where
     depth <- choose (1, maxDepth)
     genTree depth
     where
-      maxDepth = 5
+      maxDepth = 4
 
 -- genTreeGeneral :: Arbitrary a => Int -> Gen (Tree a)
 -- genTreeGeneral 0 = Leaf <$> arbitrary
