@@ -179,7 +179,7 @@ def main():
     with open(PROMPT_FILE, "r") as f:
         initial_prompt = f.read()
 
-    initial_role = "user" if GENERATOR_MODEL_NAME.startswith("o1") else "system"
+    initial_role = "user" if GENERATOR_MODEL_NAME.startswith(("o1", "deepseek")) else "system"
 
     initial_message = {
         "role": initial_role,
@@ -189,11 +189,9 @@ def main():
     conversations = []
 
     if (
-        GENERATOR_MODEL_NAME.startswith("o1")
-        or GENERATOR_MODEL_NAME.startswith("claude")
-        or GENERATOR_MODEL_NAME.startswith("anthropic")
+        GENERATOR_MODEL_NAME.startswith(("o1", "claude", "anthropic", "deepseek"))
     ):
-        # For o1 models and Claude, make separate requests (n>1 is not supported)
+        # For o1 models, Claude, and DeepSeek, make separate requests (n>1 is not supported)
         for idx in range(NUM_INITIAL_SOLUTIONS):
             response, call = chat_completion_request.call(
                 [initial_message], model=GENERATOR_MODEL_NAME, n=1, temperature=1
