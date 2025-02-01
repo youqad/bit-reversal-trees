@@ -125,7 +125,7 @@ where:
    ANTHROPIC_API_KEY=your_anthropic_api_key_here
    DEEPSEEK_API_KEY=your_deepseek_api_key_here
    WANDB_API_KEY=your_wandb_api_key
-   GENERATOR_MODEL_NAME=claude-3-sonnet-20240229 # or gpt-4o, or o1-mini, or o1-preview, or o1, or deepseek/deepseek-reasoner
+   GENERATOR_MODEL_NAME=claude-3-sonnet-20240229 # or gpt-4o, or o1-mini, or o1-preview, or o1, or o3-mini, or deepseek/deepseek-reasoner
    VERIFIER_MODEL_NAME=gpt-4o-mini # or deepseek/deepseek-chat, for example
    NUM_INITIAL_SOLUTIONS=10 # Number of suggested solutions to the initial prompt (each of them giving rise to a conversation)
    MAX_ROUNDS=8 # Number of rounds/turns per conversation, in the LLM search
