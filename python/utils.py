@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import sys
 import pexpect
+from weave.trace.serialization.serialize import to_json
 
 litellm.drop_params = True
 litellm.modify_params = True
@@ -74,7 +75,7 @@ def get_call_dict(call, response_choice, weave_client):
             return value.isoformat()
         if isinstance(value, dict):
             return {k: serialize_value(v) for k, v in value.items()}
-        return weave.to_json(value, project_id, weave_client)
+        return to_json(value, project_id, weave_client)
 
     # output_class = getattr(call, "output")
     # output_dict = output_class.__dict__
