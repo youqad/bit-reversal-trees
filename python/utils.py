@@ -7,7 +7,6 @@ import os
 import json
 import litellm
 import weave
-from weave.trace.serialize import to_json
 import platform
 import pync
 from datetime import datetime
@@ -75,7 +74,7 @@ def get_call_dict(call, response_choice, weave_client):
             return value.isoformat()
         if isinstance(value, dict):
             return {k: serialize_value(v) for k, v in value.items()}
-        return to_json(value, project_id, weave_client)
+        return weave.to_json(value, project_id, weave_client)
 
     # output_class = getattr(call, "output")
     # output_dict = output_class.__dict__
