@@ -20,13 +20,13 @@ litellm.modify_params = True
 
 load_dotenv(find_dotenv(), override=True)
 
-openai_client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    organization=os.getenv("OPENAI_ORGANIZATION"),
-    project=os.getenv("OPENAI_PROJECT"),
-)
+# openai_client = OpenAI(
+#     api_key=os.getenv("OPENAI_API_KEY"),
+#     organization=os.getenv("OPENAI_ORGANIZATION"),
+#     project=os.getenv("OPENAI_PROJECT"),
+# )
 
-anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 MAX_ROUNDS = int(os.getenv("MAX_ROUNDS", 5))
 NUM_INITIAL_SOLUTIONS = int(os.getenv("NUM_INITIAL_SOLUTIONS", 4))
