@@ -14,6 +14,7 @@ from typing import Optional, Dict, Any
 import sys
 import pexpect
 from weave.trace.serialization.serialize import to_json
+from types import SimpleNamespace
 
 litellm.drop_params = True
 litellm.modify_params = True
@@ -43,28 +44,87 @@ MAX_CONSECUTIVE_TIMEOUTS = int(os.getenv("MAX_CONSECUTIVE_TIMEOUTS", 2))
 @weave.op()
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(5))
 def chat_completion_request(messages, functions=None, function_call=None, model=GENERATOR_MODEL_NAME, temperature=0, n=1):
-    try:
-        if functions is not None and function_call is not None:
-            response = litellm.completion(
+    if model == "o1-pro":
+        # special handling for o1-pro using litellm.responses
+        if not messages:
+            raise ValueError("Messages list cannot be empty for o1-pro")
+        input_text = messages[-1].get("content", "")
+        if not input_text:
+            raise ValueError("Last message content is empty or missing for o1-pro")
+        # we are assuming n=1 for o1-pro based on the response structure.
+        if n > 1:
+            print(colored(f"Warning: 'n={n}' requested for 'o1-pro', but litellm.responses might only return one response. Proceeding with n=1 logic.", "yellow"))
+
+        try:
+            api_response = litellm.responses(
                 model=model,
-                messages=messages,
-                functions=functions,
-                function_call=function_call,
-                temperature=temperature,
-                n=n
+                input=input_text,
+                temperature=temperature, # Pass temperature if supported
             )
-        else:
-            response = litellm.completion(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                n=n
+
+            # Response Normalization:
+            # extract content from the specific structure of ResponsesAPIResponse
+            try:
+                # path: response.output[1].content[0].text
+                content_text = api_response.output[1].content[0].text
+            except (IndexError, AttributeError, TypeError) as e:
+                print(colored(f"Error extracting content from o1-pro response structure: {e}", "red"))
+                print(f"Raw o1-pro response: {api_response}")
+                raise ValueError("Could not parse expected content from o1-pro response.") from e
+            mock_message = SimpleNamespace(
+                content=content_text, 
+                role='assistant', 
+                function_call=None, 
+                tool_calls=None, 
+                annotations=[]
             )
-        return response
-    except Exception as e:
-        print("🚫 Unable to generate ChatCompletion response")
-        print(f"Exception: {e}")
-        raise e
+            mock_choice = SimpleNamespace(finish_reason='stop', index=0, logprobs=None, message=mock_message)
+            o1_usage = getattr(api_response, 'usage', None)
+            mock_usage = SimpleNamespace(
+                completion_tokens=getattr(o1_usage, 'output_tokens', 0) if o1_usage else 0,
+                prompt_tokens=getattr(o1_usage, 'input_tokens', 0) if o1_usage else 0,
+                total_tokens=getattr(o1_usage, 'total_tokens', 0) if o1_usage else 0,
+                completion_tokens_details=None,
+                prompt_tokens_details=None
+            )
+            normalized_response = SimpleNamespace(
+                id=getattr(api_response, 'id', 'unknown'),
+                choices=[mock_choice],
+                created=int(getattr(api_response, 'created_at', 0)),
+                model=getattr(api_response, 'model', model),
+                object='chat.completion', # Mimic OpenAI object type
+                system_fingerprint=None,
+                usage=mock_usage,
+                service_tier=None
+            )
+            return normalized_response
+        except Exception as e:
+            print(f"🚫 Unable to generate response using litellm.responses for {model}")
+            print(f"Exception: {e}")
+            raise e
+    else:
+        try:
+            if functions is not None and function_call is not None:
+                response = litellm.completion(
+                    model=model,
+                    messages=messages,
+                    functions=functions,
+                    function_call=function_call,
+                    temperature=temperature,
+                    n=n
+                )
+            else:
+                response = litellm.completion(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    n=n
+                )
+            return response
+        except Exception as e:
+            print("🚫 Unable to generate ChatCompletion response")
+            print(f"Exception: {e}")
+            raise e
 
 
 def get_call_dict(call, response_choice, weave_client):

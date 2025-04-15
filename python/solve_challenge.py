@@ -196,6 +196,9 @@ def main():
             response, call = chat_completion_request.call(
                 [initial_message], model=GENERATOR_MODEL_NAME, n=1, temperature=1
             )
+            if response is None or call is None:
+                print(colored(f"⚠️ API call failed for solution {idx+1}. Skipping.", "yellow"))
+                continue
             response_choice = response.choices[0]
             assistant_content = response_choice.message.content
             messages = [
@@ -227,6 +230,9 @@ def main():
             n=NUM_INITIAL_SOLUTIONS,
             temperature=1,
         )
+        if response is None or call is None:
+            print(colored("⚠️ API call failed completely. Cannot generate solutions.", "red"))
+            return
         for idx, choice in enumerate(response.choices):
             assistant_content = choice.message.content
             messages = [
