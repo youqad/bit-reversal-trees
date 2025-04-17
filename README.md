@@ -192,7 +192,7 @@ Valid solutions are logged to `solutions.txt`, `solutions_calls.jsonl`, and Weig
 
 #### Solution with our system
 
-🎉 The o3 model successfully generated a Python implementation that passes all tests and adheres to the constraints (using the function with one bit of state, and no other helper function)!
+🎉 APRIL 2025: The [o3 model has now successfully generated](https://gist.github.com/youqad/02a36419cbc4725601bffc05f14b3947) a Python implementation that passes all tests and adheres to the constraints (using the function with one bit of state, and no other helper function)!
 
 ```python
 def invert(tree: Tree) -> Tree:
