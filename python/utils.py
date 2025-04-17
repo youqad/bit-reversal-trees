@@ -15,6 +15,8 @@ import sys
 import pexpect
 from weave.trace.serialization.serialize import to_json
 from types import SimpleNamespace
+from termcolor import colored
+import unittest  # Add this import
 
 litellm.drop_params = True
 litellm.modify_params = True
@@ -41,9 +43,17 @@ LIB_FILE = "../src/Lib.hs"
 PROGRAM_SYNTHESIS_LANGUAGE = os.getenv("PROGRAM_SYNTHESIS_LANGUAGE", "haskell")
 MAX_CONSECUTIVE_TIMEOUTS = int(os.getenv("MAX_CONSECUTIVE_TIMEOUTS", 2))
 
+
 @weave.op()
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(5))
-def chat_completion_request(messages, functions=None, function_call=None, model=GENERATOR_MODEL_NAME, temperature=0, n=1):
+def chat_completion_request(
+    messages,
+    functions=None,
+    function_call=None,
+    model=GENERATOR_MODEL_NAME,
+    temperature=0,
+    n=1,
+):
     if model == "o1-pro":
         # special handling for o1-pro using litellm.responses
         if not messages:
@@ -53,13 +63,18 @@ def chat_completion_request(messages, functions=None, function_call=None, model=
             raise ValueError("Last message content is empty or missing for o1-pro")
         # we are assuming n=1 for o1-pro based on the response structure.
         if n > 1:
-            print(colored(f"Warning: 'n={n}' requested for 'o1-pro', but litellm.responses might only return one response. Proceeding with n=1 logic.", "yellow"))
+            print(
+                colored(
+                    f"Warning: 'n={n}' requested for 'o1-pro', but litellm.responses might only return one response. Proceeding with n=1 logic.",
+                    "yellow",
+                )
+            )
 
         try:
             api_response = litellm.responses(
                 model=model,
                 input=input_text,
-                temperature=temperature, # Pass temperature if supported
+                temperature=temperature,  # Pass temperature if supported
             )
 
             # Response Normalization:
@@ -68,34 +83,45 @@ def chat_completion_request(messages, functions=None, function_call=None, model=
                 # path: response.output[1].content[0].text
                 content_text = api_response.output[1].content[0].text
             except (IndexError, AttributeError, TypeError) as e:
-                print(colored(f"Error extracting content from o1-pro response structure: {e}", "red"))
+                print(
+                    colored(
+                        f"Error extracting content from o1-pro response structure: {e}",
+                        "red",
+                    )
+                )
                 print(f"Raw o1-pro response: {api_response}")
-                raise ValueError("Could not parse expected content from o1-pro response.") from e
+                raise ValueError(
+                    "Could not parse expected content from o1-pro response."
+                ) from e
             mock_message = SimpleNamespace(
-                content=content_text, 
-                role='assistant', 
-                function_call=None, 
-                tool_calls=None, 
-                annotations=[]
+                content=content_text,
+                role="assistant",
+                function_call=None,
+                tool_calls=None,
+                annotations=[],
             )
-            mock_choice = SimpleNamespace(finish_reason='stop', index=0, logprobs=None, message=mock_message)
-            o1_usage = getattr(api_response, 'usage', None)
+            mock_choice = SimpleNamespace(
+                finish_reason="stop", index=0, logprobs=None, message=mock_message
+            )
+            o1_usage = getattr(api_response, "usage", None)
             mock_usage = SimpleNamespace(
-                completion_tokens=getattr(o1_usage, 'output_tokens', 0) if o1_usage else 0,
-                prompt_tokens=getattr(o1_usage, 'input_tokens', 0) if o1_usage else 0,
-                total_tokens=getattr(o1_usage, 'total_tokens', 0) if o1_usage else 0,
+                completion_tokens=getattr(o1_usage, "output_tokens", 0)
+                if o1_usage
+                else 0,
+                prompt_tokens=getattr(o1_usage, "input_tokens", 0) if o1_usage else 0,
+                total_tokens=getattr(o1_usage, "total_tokens", 0) if o1_usage else 0,
                 completion_tokens_details=None,
-                prompt_tokens_details=None
+                prompt_tokens_details=None,
             )
             normalized_response = SimpleNamespace(
-                id=getattr(api_response, 'id', 'unknown'),
+                id=getattr(api_response, "id", "unknown"),
                 choices=[mock_choice],
-                created=int(getattr(api_response, 'created_at', 0)),
-                model=getattr(api_response, 'model', model),
-                object='chat.completion', # Mimic OpenAI object type
+                created=int(getattr(api_response, "created_at", 0)),
+                model=getattr(api_response, "model", model),
+                object="chat.completion",  # Mimic OpenAI object type
                 system_fingerprint=None,
                 usage=mock_usage,
-                service_tier=None
+                service_tier=None,
             )
             return normalized_response
         except Exception as e:
@@ -104,6 +130,8 @@ def chat_completion_request(messages, functions=None, function_call=None, model=
             raise e
     else:
         try:
+            if model == "o4-mini":
+                temperature = 1
             if functions is not None and function_call is not None:
                 response = litellm.completion(
                     model=model,
@@ -111,14 +139,11 @@ def chat_completion_request(messages, functions=None, function_call=None, model=
                     functions=functions,
                     function_call=function_call,
                     temperature=temperature,
-                    n=n
+                    n=n,
                 )
             else:
                 response = litellm.completion(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    n=n
+                    model=model, messages=messages, temperature=temperature, n=n
                 )
             return response
         except Exception as e:
@@ -158,7 +183,7 @@ def get_call_dict(call, response_choice, weave_client):
 
     serialized_output = serialize_value(getattr(call, "output", {}))
     # serialized_output["choices"] = choices
-    
+
     call_dict = {
         "id": getattr(call, "id", None),
         "project_id": project_id,
@@ -180,37 +205,42 @@ def get_call_dict(call, response_choice, weave_client):
     }
     return call_dict
 
+
 def execute_function_call(message, function_name):
     if not message.function_call:
         return None
-    
+
     if message.function_call.name == function_name:
         try:
             return json.loads(message.function_call.arguments)
         except json.JSONDecodeError:
-            raise ValueError(f"Invalid JSON in function arguments: {message.function_call.arguments}")
+            raise ValueError(
+                f"Invalid JSON in function arguments: {message.function_call.arguments}"
+            )
     return None
 
 
-def get_verifier_schemas_and_messages(assistant_content, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE):
+def get_verifier_schemas_and_messages(
+    assistant_content, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE
+):
     if program_synthesis_language == "haskell":
         verifier_function_schemas = [
             {
-            "name": "extract_invert_function",
-            "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "invert_function_code": {
-                        "type": "string",
-                        "description": "The Haskell code for the `invert :: Tree a -> Tree a` function, and ONLY this function.",
+                "name": "extract_invert_function",
+                "description": "Extract the `invert :: Tree a -> Tree a` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "invert_function_code": {
+                            "type": "string",
+                            "description": "The Haskell code for the `invert :: Tree a -> Tree a` function, and ONLY this function.",
+                        },
+                        "satisfies_requirements": {
+                            "type": "boolean",
+                            "description": "Whether the proposed `invert :: Tree a -> Tree a` function satisfies the syntactic requirements, i.e.:\n1. The `invert :: Tree a -> Tree a` function must be a standalone, pure, and recursive function.\n2. The `invert :: Tree a -> Tree a` function can either rely on no helper function at all, or rely on one single helper inner function that takes an extra boolean argument as input (i.e. an inner helper function of type `Bool -> Tree a -> Tree a`), if needed.\n3. The `invert :: Tree a -> Tree a` function only uses recursion (no loops).\n4. The `invert :: Tree a -> Tree a` function maintains purity (no side effects or mutability).",
+                        },
                     },
-                    "satisfies_requirements": {
-                        "type": "boolean",
-                        "description": "Whether the proposed `invert :: Tree a -> Tree a` function satisfies the syntactic requirements, i.e.:\n1. The `invert :: Tree a -> Tree a` function must be a standalone, pure, and recursive function.\n2. The `invert :: Tree a -> Tree a` function can either rely on no helper function at all, or rely on one single helper inner function that takes an extra boolean argument as input (i.e. an inner helper function of type `Bool -> Tree a -> Tree a`), if needed.\n3. The `invert :: Tree a -> Tree a` function only uses recursion (no loops).\n4. The `invert :: Tree a -> Tree a` function maintains purity (no side effects or mutability).",
-                    },
-                },
-                "required": ["invert_function_code", "satisfies_requirements"],
+                    "required": ["invert_function_code", "satisfies_requirements"],
                 },
             },
         ]
@@ -227,20 +257,20 @@ def get_verifier_schemas_and_messages(assistant_content, program_synthesis_langu
     elif program_synthesis_language == "python":
         verifier_function_schemas = [
             {
-            "name": "extract_invert_function",
-            "description": "Extract the `invert(tree: Tree) -> Tree` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "invert_function_code": {
-                        "type": "string",
-                        "description": "The Python code for the `invert(tree: Tree) -> Tree` function, and ONLY this function.",
+                "name": "extract_invert_function",
+                "description": "Extract the `invert(tree: Tree) -> Tree` function (and ONLY this function) and verify if it satisfies the syntactic requirements.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "invert_function_code": {
+                            "type": "string",
+                            "description": "The Python code for the `invert(tree: Tree) -> Tree` function, and ONLY this function.",
+                        },
+                        "satisfies_requirements": {
+                            "type": "boolean",
+                            "description": "Whether the proposed `invert(tree: Tree) -> Tree` function satisfies the syntactic requirements, i.e.:\n1. The `invert(tree: Tree) -> Tree` function must be a standalone, pure, and recursive function.\n2. The `invert(tree: Tree) -> Tree` function can either rely on no helper function at all, or rely on one single helper inner function that takes an extra boolean argument as input (i.e. an inner helper function of type `(flag: bool, tree: Tree) -> Tree`), if needed.\n3. The `invert(tree: Tree) -> Tree` function only uses recursion (no loops).\n4. The `invert(tree: Tree) -> Tree` function maintains purity (no side effects or mutability).",
+                        },
                     },
-                    "satisfies_requirements": {
-                        "type": "boolean",
-                        "description": "Whether the proposed `invert(tree: Tree) -> Tree` function satisfies the syntactic requirements, i.e.:\n1. The `invert(tree: Tree) -> Tree` function must be a standalone, pure, and recursive function.\n2. The `invert(tree: Tree) -> Tree` function can either rely on no helper function at all, or rely on one single helper inner function that takes an extra boolean argument as input (i.e. an inner helper function of type `(flag: bool, tree: Tree) -> Tree`), if needed.\n3. The `invert(tree: Tree) -> Tree` function only uses recursion (no loops).\n4. The `invert(tree: Tree) -> Tree` function maintains purity (no side effects or mutability).",
-                    },
-                },
                     "required": ["invert_function_code", "satisfies_requirements"],
                 },
             },
@@ -256,7 +286,9 @@ def get_verifier_schemas_and_messages(assistant_content, program_synthesis_langu
             },
         ]
     else:
-        raise ValueError(f"Unsupported program synthesis language: {program_synthesis_language}")
+        raise ValueError(
+            f"Unsupported program synthesis language: {program_synthesis_language}"
+        )
     return verifier_function_schemas, verifier_messages
 
 
@@ -292,6 +324,8 @@ def create_ghci_process():
 def extract_failed_info(output, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE):
     """
     Extract the relevant failure information from the test output.
+    For Python, 'output' is expected to be the unittest.TestResult object.
+    For Haskell, 'output' is the raw string output from GHCi.
     """
     if program_synthesis_language == "haskell":
         lines = output.split("\n")
@@ -308,12 +342,88 @@ def extract_failed_info(output, program_synthesis_language=PROGRAM_SYNTHESIS_LAN
         if start_index and end_index:
             failed_info = "\n".join(lines[start_index:end_index])
             return failed_info
+        elif start_index:  # Handle case where failure is at the end
+            failed_info = "\n".join(lines[start_index:])
+            return failed_info
         else:
-            return "Failed to extract detailed failure information."
+            # attempt to find generic failure markers if "Failed:" isn't present
+            failure_markers = ["Failures:", "Exception:", "Error:"]
+            for i, line in enumerate(lines):
+                if any(marker in line for marker in failure_markers):
+                    # snippet starting from the marker
+                    return "\n".join(
+                        lines[i : min(i + 10, len(lines))]
+                    )  # marker line + next few lines
+
+            # if no specific markers found, return a generic message
+            return (
+                "Failed to extract detailed failure information. Raw output snippet:\n"
+                + output[:500]
+            )
+
     elif program_synthesis_language == "python":
-        pass
+        # expect 'output' to be the unittest.TestResult object
+        if not isinstance(output, unittest.TestResult):
+            return "Error: Expected a unittest.TestResult object for Python failure extraction."
+
+        failures_report = []
+
+        # AssertionErrors
+        for test_case, traceback_str in output.failures:
+            assertion_error_marker = "AssertionError: "
+            assertion_msg_start = traceback_str.find(assertion_error_marker)
+
+            if assertion_msg_start != -1:
+                # message part after "AssertionError: "
+                error_details = traceback_str[
+                    assertion_msg_start + len(assertion_error_marker) :
+                ]
+
+                # look for custom message marker as seen in unittest output
+                custom_msg_marker = " : Failed:\n"
+                custom_msg_start = error_details.find(custom_msg_marker)
+
+                if custom_msg_start != -1:
+                    # custom message part starting after the marker
+                    failure_summary = error_details[
+                        custom_msg_start + len(custom_msg_marker) :
+                    ].strip()
+                    # prepend "AssertionError: Failed:" for context
+                    failures_report.append(
+                        f"Failure in {test_case}:\nAssertionError: Failed:\n{failure_summary}"
+                    )
+                else:
+                    # If custom marker not found, use the standard unittest diff message
+                    # Take the first few lines of the error details as the summary
+                    diff_summary = "\n".join(
+                        error_details.split("\n")[:5]
+                    )  # Limit lines for brevity
+                    failures_report.append(
+                        f"Failure in {test_case}:\nAssertionError: {diff_summary}"
+                    )
+            else:
+                # if AssertionError marker isn't found
+                failures_report.append(f"Failure in {test_case}:\n{traceback_str}")
+
+        # other Exceptions
+        for test_case, traceback_str in output.errors:
+            #  concise summary for errors
+            lines = traceback_str.strip().split("\n")
+            if len(lines) >= 2:
+                # often the last two lines give the error type and location/context
+                error_summary = "\n".join(lines[-2:])
+            elif len(lines) == 1:
+                error_summary = lines[0]
+            else:
+                error_summary = traceback_str
+            failures_report.append(f"Error in {test_case}:\n{error_summary}")
+
+        # Join reports with a clear separator
+        return "\n---\n".join(failures_report)
     else:
-        raise ValueError(f"Unsupported program synthesis language: {program_synthesis_language}")
+        raise ValueError(
+            f"Unsupported program synthesis language: {program_synthesis_language}"
+        )
 
 
 def send_desktop_notification(message):

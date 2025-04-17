@@ -126,7 +126,7 @@ class TestInvertFunction(unittest.TestCase):
 
     @settings(
         deadline=10000,  # 10 seconds per test case
-        suppress_health_check=[HealthCheck.too_slow],
+        suppress_health_check=[HealthCheck.too_slow, HealthCheck.differing_executors],
         database=None,
     )
     @given(perfect_binary_trees(max_depth=4))

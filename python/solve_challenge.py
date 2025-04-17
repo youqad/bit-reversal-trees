@@ -98,7 +98,7 @@ def run_tests(
                 print(colored("❌ Tests failed.", "red"))
                 consecutive_timeouts = 0
                 return False, extract_failed_info(
-                    output, program_synthesis_language=PROGRAM_SYNTHESIS_LANGUAGE
+                    output, program_synthesis_language="haskell"
                 )
             else:
                 print(colored("❌ Unknown test result.", "red"))
@@ -146,20 +146,17 @@ def run_tests(
                 return True, "All tests passed!"
             else:
                 consecutive_timeouts = 0
-                # collect the failures
-                failures = []
-                for failure in result.failures + result.errors:
-                    test_case, traceback_str = failure
-                    failures.append(traceback_str)
                 print(colored("❌ Tests failed.\n", "red"))
-                # print(colored("\n".join(failures), "red"))
+                # Call extract_failed_info for Python, passing the result object
+                failure_details = extract_failed_info(result, program_synthesis_language="python")
+                # print(colored("\n".join(failure_details), "red"))
                 # print("\n")
-                return False, "\n".join(failures)
+                return False, failure_details
 
         except Exception as e:
             consecutive_timeouts = 0
             print(colored(f"❌ Error during testing: {str(e)}", "red"))
-            return False, f"Error during testing: {str(e)}"
+            return False, f"Error during testing setup or execution: {str(e)}"
     else:
         raise ValueError(
             f"Unsupported program synthesis language: {program_synthesis_language}"
